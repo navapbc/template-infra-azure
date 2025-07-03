@@ -1,0 +1,20 @@
+#! /usr/bin/env bash
+set -euo pipefail
+
+app_name="$1"
+environment_name="$2"
+
+app_config_dir="infra/${app_name}/app-config"
+
+if [[ ! -f ${app_config_dir}/terraform.tfstate ]]; then
+    terraform -chdir="${app_config_dir}" init > /dev/null
+    terraform -chdir="${app_config_dir}" apply -auto-approve > /dev/null
+fi
+
+if [[ "${environment_name}" == "shared" ]]; then
+    network_name=$(terraform -chdir="${app_config_dir}" output -raw shared_network_name)
+else
+    network_name=$(terraform -chdir="${app_config_dir}" output -json environment_configs | jq -r ".${environment_name}.network_name")
+fi
+
+echo "${network_name}"

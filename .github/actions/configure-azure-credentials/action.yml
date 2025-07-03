@@ -1,0 +1,76 @@
+name: Configure Azure Credentials
+description: |
+  Configure Azure Credentials for a given application and environment so that
+  the GitHub Actions workflow can access Azure resources.
+
+  This is a wrapper around https://github.com/azure/login that first determines
+  the tenant, subscription, and client ids based on the configuration in
+  app-config.
+
+inputs:
+  app_name:
+    description: 'Name of application folder under /infra'
+    required: true
+  environment:
+    description: 'Name of environment (dev, staging, prod) that resources live in, or "shared" for resources that are shared across environments'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get network name from app and environment
+      id: get-network-name
+      if: ${{ inputs.app_name && inputs.environment }}
+      run: |
+        echo "Get network name for app_name=${{ inputs.app_name }} and environment=${{ inputs.environment }}"
+
+        network_name=$(./bin/network-name-for-app-environment "${{ inputs.app_name }}" "${{ inputs.environment }}")
+
+        echo "Network name retrieved: ${network_name}"
+        echo "network_name=${network_name}" >> "$GITHUB_OUTPUT"
+      shell: bash
+
+    - name: Get account name from network
+      id: get-account-name
+      run: |
+        network_name="${{ steps.get-network-name.outputs.network_name }}"
+        echo "Get account name for network: ${network_name}"
+
+        account_name=$(./bin/account-name-for-network "${network_name}")
+
+        echo "Account name retrieved: ${account_name}"
+        echo "account_name=${account_name}" >> "$GITHUB_OUTPUT"
+      shell: bash
+
+    - name: Get Azure client id, tenant id, and subscription id
+      run: |
+        echo "::group::Azure account authentication details"
+
+        network_name="${{ steps.get-network-name.outputs.network_name }}"
+        account_name="${{ steps.get-account-name.outputs.account_name }}"
+
+        terraform -chdir=infra/project-config init > /dev/null
+        terraform -chdir=infra/project-config apply -auto-approve > /dev/null
+
+        account_id=$(./bin/account-ids-by-name | jq -r ".${account_name}")
+        echo "account_id=${account_id}"
+
+        TENANT_ID=$(terraform -chdir=infra/project-config output -raw tenant_id)
+        echo "TENANT_ID=$TENANT_ID"
+
+        CLIENT_ID=$(terraform -chdir=infra/project-config output -json github_actions_azure_config | jq -r .${account_name}.client_id)
+        echo "CLIENT_ID=$CLIENT_ID"
+
+        echo "::endgroup::"
+
+        echo "Setting env vars ARM_TENANT_ID, ARM_SUBSCRIPTION_ID, and ARM_CLIENT_ID..."
+        echo "ARM_TENANT_ID=$TENANT_ID" >> "$GITHUB_ENV"
+        echo "ARM_SUBSCRIPTION_ID=$account_id" >> "$GITHUB_ENV"
+        echo "ARM_CLIENT_ID=$CLIENT_ID" >> "$GITHUB_ENV"
+      shell: bash
+
+    - uses: azure/login@v2
+      with:
+        tenant-id: ${{ env.ARM_TENANT_ID }}
+        subscription-id: ${{ env.ARM_SUBSCRIPTION_ID }}
+        client-id: ${{ env.ARM_CLIENT_ID }}

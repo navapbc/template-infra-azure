@@ -1,0 +1,31 @@
+#!/bin/sh
+# This is a minimal migration script for the infra template's example app.
+# It demonstrates the environment variables that the infrastructure provides
+# that can be used to authenticate with the database using IAM authentication
+#
+# In practice, a real project would use a migration framework like Alembic
+# (for Python projects) or Flyway (for Java projects)
+
+set -eu
+
+# https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/how-to-configure-sign-in-azure-ad-authentication#retrieve-the-microsoft-entra-access-token-1
+az login --identity --client-id "$AZURE_CLIENT_ID"
+PGPASSWORD="$(az account get-access-token --resource https://ossrdbms-aad.database.windows.net --query accessToken --output tsv)"
+export PGPASSWORD
+
+migrations_sql=$(sed "s/<DB_USER>/${DB_USER}/" migrations.sql)
+
+echo "Running migrations"
+echo "  DB_HOST=$DB_HOST"
+echo "  DB_PORT=$DB_PORT"
+echo "  DB_USER=$DB_USER"
+echo "  DB_NAME=$DB_NAME"
+echo "  DB_SCHEMA=$DB_SCHEMA"
+printf '%s\n' "${migrations_sql}" | psql \
+  --host=$DB_HOST \
+  --port=$DB_PORT \
+  --username=$DB_USER \
+  --dbname=$DB_NAME \
+  --set=SEARCH_PATH=$DB_SCHEMA \
+  --set=ON_ERROR_STOP=1 \
+  --echo-all \

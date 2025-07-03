@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# -----------------------------------------------------------------------------
+# This script creates a terraform backend config file for a terraform module.
+# It is not meant to be used directly. Instead, it is called by other scripts
+# that set up and configure the infra/accounts module and the infra/app/ modules
+# such as infra/app/service
+#
+# Positional parameters:
+#   module_dir (required) - the directory of the root module that will be configured
+#   backend_config_name (required) - the name of the backend that will be created.
+#     For environment specific configs, the backend_config_name will be the same
+#     as ENVIRONMENT. For shared configs, the backend_config_name will be "shared".
+#   account_name (conditionally required) - what account the backend is
+#     associated with, required if not `module_dir` != `infra/accounts`
+#   tf_state_key (optional) - the object key of the tfstate file in the storage location
+#     Defaults to [module_dir]/[backend_config_name].tfstate
+# -----------------------------------------------------------------------------
+set -euo pipefail
+
+module_dir="$1"
+backend_config_name="$2"
+account_name="$3"
+tf_state_key="${4:-${module_dir}/${backend_config_name}.tfstate}"
+
+# The local tfbackend config file that will store the terraform backend config
+backend_config_file="${module_dir}/${backend_config_name}.azurerm.tfbackend"
+
+# Ensure we have the correct account state to read from
+if [[ "${module_dir}" != "infra/accounts" ]]; then
+    ./bin/terraform-init "infra/accounts" "$(./bin/account-config-name "${account_name}")"
+fi
+
+# Get the name of the storage resource(s) that was created for the tf state
+# This will be used to configure the backends in all the application modules
+tf_state_resource_group_name=$(terraform -chdir=infra/accounts output -raw tf_state_resource_group_name)
+tf_state_storage_account_name=$(terraform -chdir=infra/accounts output -raw tf_state_storage_account_name)
+tf_state_container_name=$(terraform -chdir=infra/accounts output -raw tf_state_container_name)
+tf_state_subscription_id=$(terraform -chdir=infra/accounts output -raw subscription_id)
+
+echo "===================================="
+echo "Create terraform backend config file"
+echo "===================================="
+echo "Input parameters"
+echo "  module_dir=${module_dir}"
+echo "  backend_config_name=${backend_config_name}"
+echo
+
+# Create output file from example file
+cp infra/example.azurerm.tfbackend "${backend_config_file}"
+
+# Replace the placeholder values
+sed -i.bak "s/<TF_STATE_RESOURCE_GROUP_NAME>/${tf_state_resource_group_name}/g" "${backend_config_file}"
+sed -i.bak "s/<TF_STATE_STORAGE_ACCOUNT_NAME>/${tf_state_storage_account_name}/g" "${backend_config_file}"
+sed -i.bak "s/<TF_STATE_CONTAINER_NAME>/${tf_state_container_name}/g" "${backend_config_file}"
+sed -i.bak "s|<TF_STATE_KEY>|${tf_state_key}|g" "${backend_config_file}"
+sed -i.bak "s|<TF_STATE_SUBSCRIPTION_ID>|${tf_state_subscription_id}|g" "${backend_config_file}"
+
+
+# Remove the backup file created by sed
+rm "${backend_config_file}.bak"
+
+
+echo "Created file: ${backend_config_file}"
+echo "------------------ file contents ------------------"
+cat "${backend_config_file}"
+echo "----------------------- end -----------------------"

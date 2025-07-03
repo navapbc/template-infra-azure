@@ -1,0 +1,39 @@
+[project]
+name = "role-manager"
+version = "0.1.0"
+description = "Set up and configuration of an existing database"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "azure-identity>=1.21.0",
+    "pg8000",
+]
+
+[project.scripts]
+hello = "role_manager.main:main"
+manage = "role_manager.manage:manage_main"
+check = "role_manager.check:check_main"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.15.0",
+    "ruff>=0.11.2",
+]
+
+[tool.mypy]
+# local_partial_types will be enabled by default in mypy 2.0, so start now
+# https://mypy.readthedocs.io/en/stable/changelog.html#mypy-1-12
+local_partial_types = true
+pretty = true
+
+[[tool.mypy.overrides]]
+module = ["pg8000.*"]
+follow_untyped_imports = true
+
+[tool.uv]
+package = true
+compile-bytecode = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

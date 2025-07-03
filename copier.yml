@@ -1,0 +1,101 @@
+template:
+  type: str
+  choices:
+    - base
+    - app
+
+#
+# Base vars
+#
+base_project_name:
+  type: str
+  help: The slugified name of the project (lower case, dashes, and underscores)
+  validator: >-
+    {% if not (base_project_name | regex_search('^[a-z0-9\-_]+$')) %}
+    The project name can not be empty and should only contain lower case letters, digits, dashes, and underscores.
+    {% endif %}
+  when: &base
+    "{{ template == 'base' }}"
+
+base_owner:
+  type: str
+  help: Project owner slug (used for tagging infra resources)
+  when: *base
+
+base_code_repository_url:
+  type: str
+  help: URL of project source code repository
+  default: "https://github.com/{{ base_owner }}/{{ base_project_name }}"
+  when: *base
+
+base_default_region:
+  type: str
+  help: Default Azure region for the project
+  when: *base
+  default: eastus
+  choices:
+    - eastus
+    - southcentralus
+    - westus2
+    - westus3
+    - centralus
+    - eastus2euap
+    - centralusstage
+    - eastusstage
+    - eastus2stage
+    - northcentralusstage
+    - southcentralusstage
+    - westusstage
+    - westus2stage
+    - eastus2
+    - eastusstg
+    - northcentralus
+    - westus
+    - centraluseuap
+    - southcentralusstg
+    - westcentralus
+
+base_tenant_id:
+  type: str
+  help: Azure tenant
+  when: *base
+
+base_default_certificate_contact_email:
+  type: str
+  help: Email address to use for generated TLS certificates
+  when: *base
+
+#
+# App vars
+#
+app_name:
+  type: str
+  help: The name of the app
+  validator: >-
+    {% if not (app_name | regex_search('^[a-z0-9\-_]+$')) %}
+    The app name can not be empty and should only contain lower case letters, digits, dashes, and underscores.
+    {% endif %}
+  when: &app
+    "{{ template == 'app' }}"
+
+app_has_dev_env_setup:
+  type: bool
+  help: "Does '{{ app_name }}' have a dev environment deployed? (to enable various CI/CD)"
+  default: false
+  when: *app
+
+_envops:
+  trim_blocks: true
+  lstrip_blocks: true
+
+_skip_if_exists:
+  - "/{{ app_name }}/"
+  - "/{{ app_name }}/Makefile"
+
+_exclude:
+  - /.git
+  - /copier.yml
+  - /CODEOWNERS
+  - /CONTRIBUTING.md
+  - /LICENSE
+  - /README.md

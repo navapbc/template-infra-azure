@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+# -----------------------------------------------------------------------------
+# Run a Container Application Job
+#
+# Optional parameters:
+#   --environment-variables - a JSON list of environment variables to add to the
+#     the container. Each environment variable is an object with the "name" key
+#     specifying the name of the environment variable and the "value" key
+#     specifying the value of the environment variable.
+#     e.g. '[{ "name" : "DB_USER", "value" : "migrator" }]'
+#
+#   --subscription-id - the Subscription for the job, if different from the
+#     default in the current CLI session
+#
+# Positional parameters:
+#   job_name (required) -
+#   resource_group (required) -
+#   command (required) - a JSON list representing the command to run
+#     e.g. To run the command `db-migrate-up` with no arguments, set
+#     command='["db-migrate-up"]'
+#     e.g. To run the command `echo "Hello, world"` set
+#     command='["echo", "Hello, world"]')
+# -----------------------------------------------------------------------------
+set -euo pipefail
+
+# Parse optional parameters
+environment_variables=""
+while :; do
+  case $1 in
+    --environment-variables)
+      environment_variables=$2
+      shift 2
+      ;;
+    --subscription-id)
+      subscription_id=$2
+      shift 2
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+job_name="$1"
+resource_group="$2"
+command="$3"
+
+if [[ -z "${subscription_id}" ]]; then
+  subscription_id=./bin/current-account-id
+fi
+
+echo "==============="
+echo "Running job"
+echo "==============="
+echo "Input parameters"
+echo "  job_name=${job_name}"
+echo "  resource_group=${resource_group}"
+echo "  command=${command}"
+echo "  environment_variables=${environment_variables:-}"
+echo "  subscription_id=${subscription_id:-}"
+echo
+
+# using --command or --env-vars to override doesn't work, see:
+#
+# https://github.com/microsoft/azure-container-apps/issues/1360
+#
+# so get the whole template and manipulate it
+
+job_template=$(az containerapp job show \
+  --subscription "${subscription_id}" \
+  --resource-group "${resource_group}" \
+  --name "${job_name}" \
+  --query "properties.template" \
+  --output yaml)
+
+job_template=$(echo "${job_template}" | yq --yaml-output ".containers[0].command = ${command}")
+
+if [ -n "${environment_variables}" ]; then
+  base_job_template_file=$(mktemp "${TMPDIR:-/tmp}"/tmp.XXXXXXXX)
+  env_job_template_file=$(mktemp "${TMPDIR:-/tmp}"/tmp.XXXXXXXX)
+
+  echo "${job_template}" > "${base_job_template_file}"
+  echo "{\"containers\": [{\"env\": ${environment_variables}}]}" > "${env_job_template_file}"
+
+  job_template=$(yq --yaml-output --slurp 'map(.containers[0].env |= INDEX(.name)) | map(.containers |= INDEX(true)) | .[0] * .[1] | .containers |= map(.) | .containers[0].env |= map(.)' "${base_job_template_file}" "${env_job_template_file}")
+fi
+
+# then run that
+job_template_file=$(mktemp "${TMPDIR:-/tmp}"/tmp.XXXXXXXX)
+echo "${job_template}" > "${job_template_file}"
+cli_response=$(az containerapp job start \
+  --subscription "${subscription_id}" \
+  --resource-group "${resource_group}" \
+  --name "${job_name}" \
+  --yaml "${job_template_file}" \
+  --output json)
+
+echo "Job execution info:"
+echo "${cli_response}"
+echo
+
+job_execution_name=$(echo "${cli_response}" | jq -r '.name')
+
+# TODO: Azure Container Job logs can take like 5+ minutes to show up, do we want
+# to wait on them?
+
+echo "Waiting for execution completion"
+while true; do
+  job_execution_info=$(az containerapp job execution show \
+    --subscription "${subscription_id}" \
+    --resource-group "${resource_group}" \
+    --name "${job_name}" \
+    --job-execution-name "${job_execution_name}" \
+    --output json)
+
+  job_execution_status=$(echo "${job_execution_info}" | jq -r '.properties.status')
+
+  if [ "${job_execution_status}" != "Running" ]; then
+    break
+  fi
+
+  sleep 5
+  echo -n "."
+done
+
+# Exit with nonzero status if job failed
+if [ "${job_execution_status}" != "Succeeded" ]; then
+  echo "Job failed" >&2
+  echo "Job execution status: ${job_execution_status}" >&2
+  exit 1
+fi
+
+echo "Job succeeded"

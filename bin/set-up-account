@@ -1,0 +1,192 @@
+#!/usr/bin/env bash
+# -----------------------------------------------------------------------------
+# This script sets up the terraform backend for the cloud account that you are
+# currently authenticated into and creates the terraform backend config file.
+#
+# The script takes a human readable account name that is used to prefix the
+# tfbackend file that is created. This is to make it easier to visually identify
+# while tfbackend file corresponds to which cloud account. The account ID is
+# still needed since all accounts are guaranteed to have an account ID, and the
+# account ID cannot change, whereas other things like an account alias can
+# change and is not guaranteed to exist.
+#
+# Positional parameters:
+#   account_name (required) - human readable name for the cloud account that
+#     you're authenticated into. The account name will be used to prefix the
+#     created tfbackend file so that it's easier to visually identify as opposed
+#     to identifying the file using the account id.  For example, you have an
+#     account per environment, the account name can be the name of the
+#     environment (e.g. "prod" or "staging"). Or if you are setting up an
+#     account for all lower environments, account name can be "lowers".  If your
+#     cloud account has an account alias, you can also use that.
+#
+#   account_id (optional) - if not specified, will lookup currently set/default
+#                           account ID in CLI session
+#
+#   region (optional) - if not specified, will use the default region/location
+# -----------------------------------------------------------------------------
+set -euo pipefail
+
+green=$(echo -en '\033[00;32m')
+restore=$(echo -en '\033[0m')
+
+account_name="$1"
+account_id=${2:-$(./bin/current-account-id)}
+
+# Be sure the project-config outputs exist
+terraform -chdir="infra/project-config" apply -auto-approve > /dev/null
+
+# Use given location or the default from project-config
+location=${3:-$(terraform -chdir=infra/project-config output -raw default_region)}
+
+# Get project name
+project_name=$(terraform -chdir=infra/project-config output -raw project_name)
+
+tf_state_key="infra/account.tfstate"
+resource_group_name="${project_name}-tf"
+# Storage account name must be between 3 and 24 characters in length and use numbers and lower-case letters only.
+storage_account_name_hash=$(printf '%s' "${account_id}-${resource_group_name}" | md5sum | cut -d ' ' -f 1)
+storage_account_name_full="tfst${storage_account_name_hash}"
+storage_account_name="${storage_account_name_full:0:24}"
+storage_container_name=backends
+
+echo "=================="
+echo "Setting up account"
+echo "=================="
+echo "account_name=${account_name}"
+echo "account_id=${account_id}"
+echo "project_name=${project_name}"
+echo "tf_state_key=${tf_state_key}"
+echo "location=${location}"
+echo "resource_group_name=${resource_group_name}"
+echo "storage_account_name=${storage_account_name}"
+echo "storage_container_name=${storage_container_name}"
+echo
+echo "------------------------------------------------------------------------------"
+echo "Bootstrapping the account by creating an Storage backend with minimal configuration"
+echo "------------------------------------------------------------------------------"
+echo
+echo "${green}""Creating resource group""${restore}"
+resource_group_exists=$(az group exists --subscription "${account_id}" --name "${resource_group_name}")
+if [[ ${resource_group_exists} == "false" ]]; then
+    az group create --subscription "${account_id}" \
+        --name "${resource_group_name}" \
+        --location "${location}"
+    echo "${green}""Resource group created""${restore}"
+else
+    echo "${green}""Resource group already exists""${restore}"
+fi
+
+echo "${green}""Checking storage provider registration""${restore}"
+storage_provider_registration_state=$(az provider show --subscription "${account_id}" --namespace Microsoft.Storage --query registrationState -o tsv)
+if [[ ${storage_provider_registration_state} != "Registered" ]]; then
+  az provider register --subscription "${account_id}" --namespace Microsoft.Storage
+  echo "${green}""Storage provider registered""${restore}"
+else
+  echo "${green}""Storage provider already registered""${restore}"
+fi
+
+# don't use legacy shared key auth, but the Entra ID user
+export AZURE_STORAGE_AUTH_MODE=login
+
+echo "${green}""Creating storage account""${restore}"
+storage_account_check=$(az storage account check-name --subscription "${account_id}" --name "${storage_account_name}")
+storage_account_not_exists=$(echo "${storage_account_check}" | jq -j .nameAvailable)
+storage_account_reason=$(echo "${storage_account_check}" | jq -j .reason)
+if [[ ${storage_account_not_exists} == "true" ]]; then
+    az storage account create --subscription "${account_id}" \
+        --name "${storage_account_name}" \
+        --resource-group "${resource_group_name}" \
+        --location "${location}" \
+        --kind StorageV2 \
+        --sku Standard_GRS \
+        --https-only true \
+        --encryption-key-type-for-queue "Account" \
+        --encryption-key-type-for-table "Account"
+    echo "${green}""Storage account created""${restore}"
+elif [[ "${storage_account_reason}" != "null" && "${storage_account_reason}" != "AlreadyExists" ]]; then
+    echo "Storage account name issue: ${storage_account_check}"
+    exit 1
+else
+    echo "${green}""Storage account already exists""${restore}"
+fi
+
+echo "${green}""Creating storage container""${restore}"
+container_exists=$(az storage container exists --subscription "${account_id}" --name ${storage_container_name} --account-name "${storage_account_name}" | jq -j .exists)
+if [[ ${container_exists} == "false" ]]; then
+    az storage container create --subscription "${account_id}" \
+        --name ${storage_container_name} \
+        --account-name "${storage_account_name}"
+    echo "${green}""Storage container created""${restore}"
+else
+    echo "${green}""Storage container already exists""${restore}"
+fi
+
+echo
+echo "----------------------------------"
+echo "Creating rest of account resources"
+echo "----------------------------------"
+echo
+
+cd infra/accounts
+
+# Create the infrastructure for the terraform backend such as the storage
+# location and supporting infrastructure for tfstate files. -reconfigure is used
+# in case this isn't the first account being set up and there is already a
+# .terraform directory
+terraform init \
+  -reconfigure \
+  -input=false \
+  -backend-config="subscription_id=${account_id}" \
+  -backend-config="storage_account_name=${storage_account_name}" \
+  -backend-config="key=${tf_state_key}" \
+  -backend-config="container_name=${storage_container_name}"
+
+export TF_VAR_account_name=${account_name}
+# The accounts Terraform code normally looks up the Subscription ID by the name
+# of the *.tfbackend files, which don't exist yet for this account, so set
+# explicitly.
+#
+# We don't just set the Azure provider env var, ARM_SUBSCRIPTION_ID, because our
+# code needs the ID to construct a few other things as well (stable, predicable,
+# but globally unique resource names, etc.)
+export TF_VAR_account_id=${account_id}
+
+# The accounts Terraform code normally looks up the Subscription ID by the name
+# of the *.tfbackend files, which don't exist yet for this account, so set
+# explicitly.
+
+# Import the resources that we created in the previous steps so we don't
+# recreate them, but first check if they already exist in the state file. If we
+# are re-running account setup and some resources already exists then skip the
+# import step.
+if ! terraform state list module.backend.azurerm_resource_group.tf_state; then
+  echo "${green}""Importing resource group""${restore}"
+  terraform import module.backend.azurerm_resource_group.tf_state "$(az group show --subscription "${account_id}" --name "${resource_group_name}" --query 'id' -o tsv)"
+fi
+
+if ! terraform state list module.backend.azurerm_storage_account.tf_state; then
+  echo "${green}""Importing storage account""${restore}"
+  terraform import module.backend.azurerm_storage_account.tf_state "$(az storage account show --subscription "${account_id}" --resource-group "${resource_group_name}" --name "${storage_account_name}" --query 'id' -o tsv)"
+fi
+
+if ! terraform state list module.backend.azurerm_storage_container.tf_state; then
+  echo "${green}""Importing storage container""${restore}"
+  storage_account_id="$(az storage account show --subscription "${account_id}" --resource-group "${resource_group_name}" --name "${storage_account_name}" --query 'id' -o tsv)"
+  terraform import module.backend.azurerm_storage_container.tf_state "${storage_account_id}/blobServices/default/containers/${storage_container_name}"
+fi
+
+terraform apply \
+  -input=false \
+  -auto-approve
+
+cd -
+
+module_dir=infra/accounts
+backend_config_name="${account_name}.${account_id}"
+./bin/create-tfbackend "${module_dir}" "${backend_config_name}" "${tf_state_key}"
+
+# Configure vars file for the account
+tfvars_file=infra/accounts/"${backend_config_name}".tfvars
+touch "${tfvars_file}"
+echo "account_name = \"${account_name}\"" > "${tfvars_file}"

@@ -1,0 +1,44 @@
+locals {
+  # Machine readable project name (lower case letters, dashes, and underscores)
+  project_name = "{{ base_project_name }}"
+
+  # Project owner
+  owner = "{{ base_owner }}"
+
+  # URL of project source code repository
+  code_repository_url = "{{ base_code_repository_url }}"
+
+  default_region = "{{ base_default_region }}"
+
+  tenant_id = "{{ base_tenant_id }}"
+
+  github_actions_azure_config = {
+    # lowers : {
+    #   client_id : "<client_id>",
+    #   object_id : "<object_id>",
+    # },
+
+    # prod : {
+    #   client_id : "<client_id>",
+    #   object_id : "<object_id>",
+    # }
+  }
+
+  infra_admins = {
+    # lowers : {
+    #   object_ids : [
+    #     "<user_object_id>",
+    #     local.github_actions_azure_config["lowers"].object_id, # GH Actions Service Principal/Enterprise Application
+    #   ]
+    # },
+
+    # prod : {
+    #   object_ids : [
+    #     "<user_object_id>",
+    #     local.github_actions_azure_config["prod"].object_id, # GH Actions Service Principal/Enterprise Application
+    #   ]
+    # }
+  }
+
+  default_certificate_contact_email = "{{ base_default_certificate_contact_email }}"
+}

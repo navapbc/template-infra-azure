@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#
+# Print the config name for the given account name
+#
+# Do this by getting the current account and searching for a file in
+# infra/accounts that matches "<account name>.<account id>.<backend
+# type>.tfbackend".
+#
+# The config name is "<account name>.<account id>"
+set -euo pipefail
+
+account_name="$1"
+
+# backend_config_file_path=$(ls -1 infra/accounts/*."${account_id}".*.tfbackend)
+backend_config_file_path=$(ls -1 infra/accounts/"${account_name}".*.*.tfbackend)
+backend_config_file=$(basename "${backend_config_file_path}")
+backend_config_name="${backend_config_file%.*.tfbackend}"
+
+echo "${backend_config_name}"

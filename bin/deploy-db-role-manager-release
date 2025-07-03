@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+app_name="$1"
+image_tag="$2"
+environment="$3"
+
+echo "--------------"
+echo "Deploy release"
+echo "--------------"
+echo "Input parameters:"
+echo "  app_name=${app_name}"
+echo "  image_tag=${image_tag}"
+echo "  environment=${environment}"
+echo
+echo "Starting DB Role Manager deploy of ${image_tag} to ${app_name} environment ${environment}"
+
+TF_CLI_ARGS_apply="-input=false -auto-approve -var=role_manager_image_tag=${image_tag}" make infra-update-app-database APP_NAME="${app_name}" ENVIRONMENT="${environment}"
+
+echo "Completed DB Role Manager deploy of ${image_tag} to ${app_name} environment ${environment}"

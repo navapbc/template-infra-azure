@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+#
+# https://docs.github.com/en/rest/actions/oidc
+
+set -euo pipefail
+
+# Default to placeholder values that `gh` will automatically populate, but allow
+# overriding with arguments.
+#
+# > Placeholder values {owner}, {repo}, and {branch} in the endpoint argument
+# > will get replaced with values from the repository of the current directory or
+# > the repository specified in the GH_REPO environment variable
+#
+# https://cli.github.com/manual/gh_api
+owner=${1:-"{owner}"}
+repo=${2:-"{repo}"}
+
+# Just have `gh` print response bodies directly
+export GH_PAGER=cat
+
+echo "Current OIDC subject settings:"
+gh api \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  "/repos/${owner}/${repo}/actions/oidc/customization/sub"
+
+echo
+echo "Updating OIDC subject claims to only include repository name..."
+gh api --method PUT \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  "/repos/${owner}/${repo}/actions/oidc/customization/sub" \
+  -F use_default=false \
+  -f "include_claim_keys[]=repo"
+echo "...done"
+
+
+echo
+echo "New OIDC subject settings:"
+gh api \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  "/repos/${owner}/${repo}/actions/oidc/customization/sub"

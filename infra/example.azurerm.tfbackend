@@ -1,0 +1,5 @@
+resource_group_name  = "<TF_STATE_RESOURCE_GROUP_NAME>"
+storage_account_name = "<TF_STATE_STORAGE_ACCOUNT_NAME>"
+container_name       = "<TF_STATE_CONTAINER_NAME>"
+key                  = "<TF_STATE_KEY>"
+subscription_id      = "<TF_STATE_SUBSCRIPTION_ID>"

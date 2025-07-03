@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Print the current Azure subscription id
+set -euo pipefail
+echo -n "$(az account show --query 'id' --output tsv)"

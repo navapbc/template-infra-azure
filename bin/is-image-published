@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Checks if an image tag has already been published to the container repository
+# Prints "true" if so, "false" otherwise
+
+set -euo pipefail
+
+app_name="$1"
+git_ref="$2"
+
+image_choice=${3:-app}
+
+# Get commit hash
+image_tag=$(git rev-parse "${git_ref}")
+
+# Need to init module when running in CD since GitHub actions does a fresh checkout of repo
+terraform -chdir="infra/${app_name}/app-config" init > /dev/null
+terraform -chdir="infra/${app_name}/app-config" apply -auto-approve > /dev/null
+if [ "${image_choice}" = "app" ]; then
+  image_repository_name="$(terraform -chdir="infra/${app_name}/app-config" output -json build_repository_config | jq -r ".name")"
+elif [ "${image_choice}" = "db-role-manager" ]; then
+  image_repository_name="$(terraform -chdir="infra/${app_name}/app-config" output -json build_repository_config | jq -r ".db_role_manager_name")"
+else
+  echo "Unknown image choice: ${image_choice}"
+  exit 1
+fi
+
+
+image_registry_name="$(terraform -chdir="infra/${app_name}/app-config" output -json build_repository_config | jq -r ".registry_name")"
+image_registry_subscription_id="$(terraform -chdir="infra/${app_name}/app-config" output -json build_repository_config | jq -r ".account_id")"
+
+result=""
+result=$(az acr repository show-tags --subscription "${image_registry_subscription_id}" --name "${image_registry_name}" --repository "${image_repository_name}" --query "[?contains(@, '$image_tag')]" -o tsv 2> /dev/null ) || true
+if [ -n "${result}" ];then
+  echo "true"
+else
+  echo "false"
+fi

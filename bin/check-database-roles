@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# -----------------------------------------------------------------------------
+# Script that invokes the database role-manager to check that the Postgres users
+# were configured properly.
+#
+# Positional parameters:
+#   app_name (required) – the name of subdirectory of /infra that holds the
+#     application's infrastructure code.
+#   environment (required) - the name of the application environment (e.g. dev
+#     staging, prod)
+# -----------------------------------------------------------------------------
+set -euo pipefail
+
+app_name="$1"
+environment="$2"
+
+./bin/terraform-init "infra/${app_name}/database" "${environment}"
+
+db_resource_group=$(terraform -chdir="infra/${app_name}/database" output -raw db_resource_group_name)
+db_role_manager_job_name=$(terraform -chdir="infra/${app_name}/database" output -raw role_manager_job_name)
+
+echo "======================="
+echo "Checking database roles"
+echo "======================="
+echo "Input parameters"
+echo "  app_name=${app_name}"
+echo "  environment=${environment}"
+echo
+echo "Invoking job: ${db_role_manager_job_name}"
+echo
+
+command='["check"]'
+subscription_id=$(./bin/network-name-for-app-environment "${app_name}" "${environment}" | ./bin/account-name-for-network | { network_name=$(cat); ./bin/account-ids-by-name | jq -r ".${network_name}"; })
+
+./bin/run-app-job --subscription-id "${subscription_id}" "${db_role_manager_job_name}" "${db_resource_group}" "${command}"
