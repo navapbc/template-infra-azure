@@ -1,0 +1,24 @@
+name: Template CI App Checks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - template-only-app/**
+      - .github/workflows/template-only-ci-app.yml
+
+defaults:
+  run:
+    working-directory: ./template-only-app
+
+jobs:
+  # Run the build to make sure it doesn't fail
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run build
+      run: make release-build
