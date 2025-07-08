@@ -1,6 +1,8 @@
 .PHONY : \
 	release-build
 
+CONTAINER_CMD ?= docker
+
 release-build:
 	$(CONTAINER_CMD) build \
 		--target release \
