@@ -21,12 +21,14 @@ jobs:
           - navapbc/platform-test-azure
 
     steps:
-      - name: Checkout project repo
-        uses: actions/checkout@v4
+      - name: Configure SSH keys
+        uses: tanmancan/action-setup-ssh-agent-key@1.0.0
         with:
-          path: project-repo
-          repository: ${{ matrix.project_repo }}
-          token: ${{ secrets.PLATFORM_BOT_GITHUB_TOKEN }}
+          ssh-private-key: ${{ secrets.PLATFORM_BOT_SSH_PRIVATE_KEY }}
+
+      - name: Checkout project repo
+        run: |
+          git clone git@github.com:${{ matrix.project_repo }}.git project-repo
 
       # Set up Python since built in Python version (3.10.12) is not supported by Platform CLI (<4.0,>=3.11)
       - name: Set up Python
@@ -45,17 +47,13 @@ jobs:
 
       - name: Update infra template
         working-directory: project-repo
-        run: nava-platform infra update --template-uri ${{ github.server_url }}/${{ github.repository }} --version HEAD .
-
-      - name: Checkout template-infra-azure repo (for example app)
-        if: "${{ matrix.project_repo == 'navapbc/platform-test-azure' }}"
-        uses: actions/checkout@v4
-        with:
-          path: template-infra-azure
+        run: nava-platform infra update --template-uri git@github.com:${{ github.repository }}.git --version HEAD .
 
       - name: Install example app
         if: "${{ matrix.project_repo == 'navapbc/platform-test-azure' }}"
         run: |
+          git clone git@github.com:${{ github.repository }}.git template-infra-azure
+
           # replace existing app with updated example app code
           rm -rf ./project-repo/app
           mv -vf ./template-infra-azure/template-only-app ./project-repo/app
