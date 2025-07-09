@@ -1,11 +1,11 @@
 locals {
-  location = try(var.vnet_config.location, module.project_config.default_region)
+  location = try(var.vnet_config.location, data.azurerm_resource_group.rg.location)
 
   has_nat_gateway = anytrue([for s in var.vnet_config.subnets : lookup(s, "internet_access", false)])
 }
 
-module "project_config" {
-  source = "../../../../project-config"
+data "azurerm_resource_group" "rg" {
+  name = var.resource_group_name
 }
 
 resource "azurerm_virtual_network" "vnet" {
