@@ -10,7 +10,7 @@
             "pattern": "127.0.0.1"
         },
         {
-            "pattern": " https://github.com/navapbc/template-infra-azure"
+            "pattern": "https://github.com/navapbc/template-infra-azure"
         }
     ],
     "replacementPatterns": [
