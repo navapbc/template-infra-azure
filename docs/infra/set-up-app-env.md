@@ -32,8 +32,8 @@ folder. It defaults to `app`. `ENVIRONMENT` needs to be the name of the
 environment you are creating. This will create a file called
 `<ENVIRONMENT>.s3.tfbackend` in the `infra/app/service` module directory.
 
-Depending on the value of `has_database` in the [app-config
-module](/infra/app/app-config/main.tf), the application will be configured with
+Depending on the value of `has_database` in the app-config module
+(`infra/<APP_NAME>/app-config/main.tf`), the application will be configured with
 or without database access.
 
 ## 2. Build and publish the application to the application build repository

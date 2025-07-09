@@ -59,7 +59,7 @@ files](https://developer.hashicorp.com/terraform/language/values/variables#assig
 1. Eliminate the possibility of passing in the incorrect `.tfvars` file to
    `terraform plan/apply`. Since we [reuse the same root module with multiple
    terraform backend
-   configs](/docs/decisions/infra/2023-05-09-separate-terraform-backend-configs-into-separate-config-files.md),
+   configs](https://github.com/navapbc/template-infra/blob/main/docs/decisions/infra/2023-05-09-separate-terraform-backend-configs-into-separate-config-files.md),
    having separate `.tfvars` requires that after `terraform init` is called with
    a specific `-backend-config` file, the corresponding `.tfvars` file needs to
    be passed to `terraform plan`/`terraform apply`. This creates opportunity for

@@ -19,6 +19,7 @@ The Azure account setup process will:
 * You'll need to have [set up infrastructure
   tools](./set-up-infrastructure-tools.md), like Terraform, Azure CLI, and Azure
   authentication.
+<!-- markdown-link-check-disable-next-line -->
 * You'll also need to make sure the [project is
   configured](/infra/project-config/main.tf).
   * You will ultimately want to set an `infra_admins` entry for the given
