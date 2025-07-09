@@ -52,8 +52,11 @@ resource "azurerm_container_app" "service" {
   revision_mode                = "Single"
   workload_profile_name        = "Consumption"
 
-  # TODO: do we need this? probably for first deploy. how to handle the dynamic
-  # "azure_role_assignment" resources properly?
+  # Other roles are also required, but that list may be dynamic/would require
+  # more work to track super accurately, so just one one of the roles, which
+  # generally gets things delayed/ordered correctly. If you happen to encounter
+  # deploy errors around roles not existing, should be able to just retry the
+  # deploy.
   depends_on = [azurerm_role_assignment.app_cr]
 
   identity {

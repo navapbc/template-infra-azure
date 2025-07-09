@@ -102,9 +102,7 @@ module "backend" {
 
 module "auth_github_actions" {
   source = "../modules/auth-github-actions"
-  name   = "platform-test-github-oidc"
-  # TODO: this should have the account name/id embedded in it?
-  # name   = "platform-test-github-oidc"
+  name   = "${module.project_config.project_name}-${var.account_name}-github-oidc"
 
   code_repository                  = module.project_config.code_repository
   tf_state_storage_container_scope = module.backend.tf_state_storage_container_scope

@@ -20,9 +20,6 @@ resource "azurerm_role_assignment" "db_role_manager" {
   depends_on = [
     azurerm_user_assigned_identity.db_role_manager
   ]
-  # TODO: could set to true for initial deploys, but shouldn't be needed after
-  # that, okay to just always set to true?
-  # skip_service_principal_aad_check = true
 }
 
 resource "azuread_group_member" "db_role_manager_admin" {

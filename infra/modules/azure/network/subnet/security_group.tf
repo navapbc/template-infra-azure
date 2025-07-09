@@ -223,8 +223,8 @@ resource "azurerm_network_security_rule" "allow_limited_vnet_outbound" {
   network_security_group_name = azurerm_network_security_group.subnet.name
 }
 
-# TODO: this is basically just so `az login` in example app bin/db-migrate will
-# work, not sure it's required for anything else
+# This enables `az login` in the example app `bin/db-migrate` script to work,
+# depending on how your needs, this may or may not be relevant.
 #
 # https://github.com/Azure/azure-cli/issues/12441
 # https://github.com/Azure/azure-cli/issues/30723

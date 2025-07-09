@@ -20,6 +20,6 @@ output "network_zone_name" {
 }
 
 output "certificate_secret_id" {
-  # versionless to automatically support automatic rotation
+  # versionless to support automatic rotation
   value = var.cert_name != null ? data.azurerm_key_vault_certificate.cert[0].versionless_secret_id : null
 }

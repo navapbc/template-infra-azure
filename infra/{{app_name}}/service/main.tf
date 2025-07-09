@@ -19,7 +19,6 @@ locals {
 
   location = module.project_config.default_region
 
-  # TODO: move to network/data/outputs.tf? But would then need to pass in more config to it?
   network_config           = module.project_config.network_configs[local.environment_config.network_name]
   private_endpoints_subnet = lookup(module.network.subnets, try(local.network_config.network.private_endpoints_subnet_name, ""), null)
 }

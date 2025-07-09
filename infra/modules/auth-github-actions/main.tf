@@ -2,8 +2,7 @@ data "azurerm_subscription" "current" {}
 
 locals {
   subscription_roles = toset([
-    "Contributor", # control plane access to most things, but can't assign roles (like Owner)
-    # TODO could replace these both with "Key Vault Administrator"?
+    "Contributor",                             # control plane access to most things, but can't assign roles (like Owner)
     "Key Vault Secrets Officer",               # read/write the actual service secrets data/objects
     "Key Vault Certificates Officer",          # read/write certificate secrets data/objects
     "Role Based Access Control Administrator", # read/create service and DB user groups (almost like Owner role)
@@ -45,9 +44,6 @@ resource "azuread_application_api_access" "github_actions_msgraph" {
 #   resource_object_id  = data.azuread_service_principal.msgraph.object_id
 # }
 
-# TODO: alt naming
-# display_name = "oidc-github-credentials"
-# description = "OIDC credentials for Github Actions"
 resource "azuread_application_federated_identity_credential" "github" {
   application_id = azuread_application_registration.github_actions.id
   display_name   = "github"

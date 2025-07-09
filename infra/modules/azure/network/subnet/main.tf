@@ -15,8 +15,6 @@ resource "azurerm_subnet" "subnet" {
   # https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/default-outbound-access
   default_outbound_access_enabled = false
 
-  # TODO: need this?
-  # private_endpoint_network_policies = "NetworkSecurityGroupEnabled"
   private_endpoint_network_policies = "Enabled"
 
   # When configuring Azure Private Link service this must be set to `false` in

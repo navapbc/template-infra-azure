@@ -1,4 +1,3 @@
-# TODO: export relevant info
 locals {
   create_container_app_env = try(contains(var.subnet_config.service_delegation, "Microsoft.App/environments"), false)
 }

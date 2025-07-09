@@ -50,7 +50,6 @@ module "secrets" {
   manage_method = each.value.manage_method
 }
 
-# TODO: move into modules/secret-store?
 module "secrets_endpoint" {
   source = "../../modules/azure/network/private-endpoint"
 

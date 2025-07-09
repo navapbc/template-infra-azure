@@ -5,7 +5,7 @@ module "prod_config" {
   default_region = module.project_config.default_region
   environment    = "prod"
   network_name   = "prod"
-  domain_name    = "platform-test-azure.navateam.com"
+  domain_name    = "my-project-subdomain.foo.com"
   has_database   = local.has_database
 
   service_cpu                    = 1

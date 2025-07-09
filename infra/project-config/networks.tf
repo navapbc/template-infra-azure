@@ -65,25 +65,29 @@ locals {
       network = {
         vnet_cidr = "10.0.16.0/20"
 
+        application_gateway_subnet_name = "gateway"
+        private_endpoints_subnet_name   = "private-endpoints"
+
         subnets = {
-          apps-public = {
-            # You should evaluate your service's scaling needs and pick a
-            # suitable subnet size.
-            #
-            # https://learn.microsoft.com/en-us/azure/container-apps/networking?tabs=workload-profiles-env%2Cazure-cli#subnet
-            subnet_cidr        = "10.0.16.0/24"
-            service_endpoints  = ["Microsoft.ContainerRegistry", "Microsoft.KeyVault"]
-            service_delegation = ["Microsoft.App/environments"]
-            internet_access    = true
+          gateway = {
+            subnet_cidr         = "10.0.16.0/24"
+            outbound_peer_cidrs = ["10.0.1.0/24", "10.0.4.0/24"]
+            internet_access     = true
           }
-          apps-private = {
-            subnet_cidr        = "10.0.17.0/24"
-            service_endpoints  = ["Microsoft.ContainerRegistry", "Microsoft.KeyVault"]
-            service_delegation = ["Microsoft.App/environments"]
+          private-endpoints = {
+            subnet_cidr = "10.0.17.0/24"
           }
           database = {
             subnet_cidr        = "10.0.18.0/24"
             service_delegation = ["Microsoft.DBforPostgreSQL/flexibleServers"]
+          }
+          apps-private = {
+            # You should evaluate your service's scaling needs and pick a
+            # suitable subnet size.
+            #
+            # https://learn.microsoft.com/en-us/azure/container-apps/networking?tabs=workload-profiles-env%2Cazure-cli#subnet
+            subnet_cidr        = "10.0.19.0/24"
+            service_delegation = ["Microsoft.App/environments"]
           }
         }
       }
