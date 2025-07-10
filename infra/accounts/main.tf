@@ -84,10 +84,15 @@ resource "azurerm_log_analytics_workspace" "subscription_logs" {
   retention_in_days   = 30
 }
 
+resource "azurerm_resource_group" "tf_state" {
+  name     = var.tf_state_resource_group_name_override != null ? var.tf_state_resource_group_name_override : local.tf_state_resource_group_name
+  location = local.region
+}
+
 module "backend" {
   source               = "../modules/terraform-backend-azure"
-  location             = module.project_config.default_region
-  resource_group_name  = var.tf_state_resource_group_name_override != null ? var.tf_state_resource_group_name_override : local.tf_state_resource_group_name
+  location             = azurerm_resource_group.tf_state.location
+  resource_group_name  = azurerm_resource_group.tf_state.name
   storage_account_name = var.tf_state_storage_account_name_override != null ? var.tf_state_storage_account_name_override : local.tf_state_storage_account_name
 
   # TODO: can make this the default/non configurable once we recreate the "dev"

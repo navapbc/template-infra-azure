@@ -1,15 +1,9 @@
 data "azurerm_subscription" "current" {}
 
-# TODO: move creation to accounts/main.tf?
-resource "azurerm_resource_group" "tf_state" {
-  name     = var.resource_group_name
-  location = var.location
-}
-
 resource "azurerm_storage_account" "tf_state" {
   name                       = var.storage_account_name
-  resource_group_name        = azurerm_resource_group.tf_state.name
-  location                   = azurerm_resource_group.tf_state.location
+  resource_group_name        = var.resource_group_name
+  location                   = var.location
   account_kind               = "StorageV2"
   account_tier               = "Standard"
   account_replication_type   = "GRS"
@@ -76,8 +70,8 @@ resource "azurerm_key_vault" "tf_state" {
   count = var.use_customer_managed_encryption_key ? 1 : 0
 
   name                = var.storage_account_name
-  location            = azurerm_resource_group.tf_state.location
-  resource_group_name = azurerm_resource_group.tf_state.name
+  location            = var.location
+  resource_group_name = var.resource_group_name
   tenant_id           = data.azurerm_subscription.current.tenant_id
   sku_name            = "standard"
 
@@ -118,8 +112,8 @@ resource "azurerm_user_assigned_identity" "tf_state" {
   count = var.use_customer_managed_encryption_key ? 1 : 0
 
   name                = "${var.storage_account_name}-uai"
-  location            = azurerm_resource_group.tf_state.location
-  resource_group_name = azurerm_resource_group.tf_state.name
+  location            = var.location
+  resource_group_name = var.resource_group_name
 }
 
 resource "azurerm_role_assignment" "tf_state_key" {
