@@ -13,7 +13,7 @@ variable "account_id" {
   default = null
 }
 
-# TODO: support this long-term?
+# TODO: support these long-term?
 variable "tf_state_resource_group_name_override" {
   type    = string
   default = null
@@ -22,4 +22,9 @@ variable "tf_state_resource_group_name_override" {
 variable "tf_state_storage_account_name_override" {
   type    = string
   default = null
+}
+
+variable "tf_state_use_customer_managed_encryption_key" {
+  type    = bool
+  default = true
 }

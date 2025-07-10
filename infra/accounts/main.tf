@@ -95,9 +95,7 @@ module "backend" {
   resource_group_name  = azurerm_resource_group.tf_state.name
   storage_account_name = var.tf_state_storage_account_name_override != null ? var.tf_state_storage_account_name_override : local.tf_state_storage_account_name
 
-  # TODO: can make this the default/non configurable once we recreate the "dev"
-  # account
-  use_customer_managed_encryption_key = var.account_name == "prod"
+  use_customer_managed_encryption_key = var.tf_state_use_customer_managed_encryption_key
 
   monitor_config = {
     enabled                    = true
