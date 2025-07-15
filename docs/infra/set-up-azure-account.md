@@ -129,6 +129,40 @@ Something like:
   }
 ```
 
+### 5. Approve GitHub identity Entra permissions
+
+The created GitHub identity will be setup with permissions in the Azure account
+automatically, but it additionally needs permissions at the Microsoft Entra
+tenant level which will require elevated permissions to approval for initial
+setup of the account.
+
+Specifically a user with "Global Administrator" or "Privileged Role
+Administrator" role will need to grant admin consent to the Entra registered
+application that the service principal is connected to.
+
+In the Azure Portal or Entra admin center, this user should go to:
+
+<App registration page for app> > Manage > API Permissions
+
+The registration page for the app can be found by searching `<project
+name>-<account name>-github-oidc`, but as display names are not unique in Entra,
+it's better to search via an ID, like the application/client ID.
+
+There should be a "Grant admin consent for <org name>" button at the top of the
+table. The user should click it.
+
+Alternatively, the global admin could use the [Azure CLI to grant the
+permission](https://learn.microsoft.com/en-us/cli/azure/ad/app/permission?view=azure-cli-latest#az-ad-app-permission-admin-consent):
+
+```bash
+az ad app permission admin-consent --id <app id>
+```
+
+Or if developers themselves will have an elevated account, and if all account
+runs will be with the elevated permissions uncomment the
+`azuread_app_role_assignment` block in
+`/infra/modules/auth-github-actions/main.tf`.
+
 ## Making changes to the account
 
 If you make changes to the account terraform and want to apply those changes,
