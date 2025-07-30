@@ -13,6 +13,10 @@ locals {
   resource_group_name = "${local.prefix}${local.database_config.resource_group_name}"
 
   infra_admin_config = module.project_config.infra_admins[local.environment_config.account_name]
+
+  network_config = module.project_config.network_configs[local.environment_config.network_name]
+
+  location = try(local.network_config.network.location, module.project_config.default_region)
 }
 
 terraform {
@@ -73,7 +77,7 @@ module "network" {
 
 resource "azurerm_resource_group" "db" {
   name     = local.resource_group_name
-  location = module.project_config.default_region
+  location = local.location
 }
 
 module "database" {
@@ -93,6 +97,6 @@ module "database" {
   network_resource_group_name = module.network.resource_group_name
 
   dns_zone_id   = data.azurerm_private_dns_zone.db.id
-  location      = module.project_config.default_region
+  location      = azurerm_resource_group.db.location
   flex_sku_name = "B_Standard_B1ms"
 }
