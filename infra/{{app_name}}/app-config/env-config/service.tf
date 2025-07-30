@@ -1,7 +1,6 @@
 locals {
   service_config = {
     service_name           = "${var.app_name}-${var.environment}"
-    region                 = var.default_region
     cpu                    = var.service_cpu
     memory                 = var.service_memory
     desired_instance_count = var.service_desired_instance_count

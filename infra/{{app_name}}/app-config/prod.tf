@@ -1,12 +1,11 @@
 module "prod_config" {
-  source         = "./env-config"
-  project_name   = local.project_name
-  app_name       = local.app_name
-  default_region = module.project_config.default_region
-  environment    = "prod"
-  network_name   = "prod"
-  domain_name    = "my-project-subdomain.foo.com"
-  has_database   = local.has_database
+  source       = "./env-config"
+  project_name = local.project_name
+  app_name     = local.app_name
+  environment  = "prod"
+  network_name = "prod"
+  domain_name  = "my-project-subdomain.foo.com"
+  has_database = local.has_database
 
   service_cpu                    = 1
   service_memory                 = "2Gi"

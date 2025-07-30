@@ -11,11 +11,6 @@ variable "environment" {
   type        = string
 }
 
-variable "default_region" {
-  description = "default region for the project"
-  type        = string
-}
-
 variable "has_database" {
   type = bool
 }
