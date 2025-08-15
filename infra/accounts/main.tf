@@ -25,7 +25,7 @@ locals {
   })
 
   # To ease initial account setup, fallback to an owner list of just the current
-  # user. Outside of the initial account setup, you should an `infra_admins` in
+  # user. Outside of the initial account setup, you should set `infra_admins` in
   # the project config for the account.
   infra_admin_config = try(module.project_config.infra_admins[var.account_name], { object_ids : [data.azurerm_client_config.current.object_id] })
 }
