@@ -36,8 +36,10 @@ flowchart TB
     network:::root-module
 
     subgraph app
-      app/database[database]:::root-module
-      app/service[service]:::root-module
+      subgraph environment
+        app/database[database]:::root-module
+        app/service[service]:::root-module
+      end
     end
 
     subgraph modules
