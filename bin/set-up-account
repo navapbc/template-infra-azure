@@ -152,10 +152,6 @@ export TF_VAR_account_name=${account_name}
 # but globally unique resource names, etc.)
 export TF_VAR_account_id=${account_id}
 
-# The accounts Terraform code normally looks up the Subscription ID by the name
-# of the *.tfbackend files, which don't exist yet for this account, so set
-# explicitly.
-
 # Import the resources that we created in the previous steps so we don't
 # recreate them, but first check if they already exist in the state file. If we
 # are re-running account setup and some resources already exists then skip the
