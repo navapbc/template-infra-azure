@@ -8,7 +8,7 @@ set -euo pipefail
 script_dir=$(dirname "$0")
 
 key_value_pairs=()
-backend_config_file_paths=$(ls -1 "${script_dir}"/../infra/accounts/*.*.tfbackend)
+backend_config_file_paths=$(ls -1 "${script_dir}"/../infra/accounts/*.*.tfbackend 2> /dev/null || true)
 
 for backend_config_file_path in $backend_config_file_paths; do
   backend_config_file=$(basename "$backend_config_file_path")
