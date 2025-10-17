@@ -22,6 +22,10 @@ The Azure account setup process will:
 <!-- markdown-link-check-disable-next-line -->
 * You'll also need to make sure the [project is
   configured](/infra/project-config/main.tf).
+  * If this is for an initial project set up, set `shared_account_name` in
+    `infra/project-config/networks.tf` to the name you will use for
+    `<ACCOUNT_NAME>` below, which is where shared project resources will be
+    created.
   * You will ultimately want to set an `infra_admins` entry for the given
     account name, but you can do that after initial creation. Note only the
     person who runs the initial create will be able to run the update.
@@ -142,7 +146,7 @@ application that the service principal is connected to.
 
 In the Azure Portal or Entra admin center, this user should go to:
 
-<App registration page for app> > Manage > API Permissions
+[App registration page for app] > Manage > API Permissions
 
 The registration page for the app can be found by searching `<project
 name>-<account name>-github-oidc`, but as display names are not unique in Entra,
