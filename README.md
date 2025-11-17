@@ -1,8 +1,29 @@
-# Template repository for application infrastructure
+<p>
+  <img src="docs/assets/Nava-Strata-Logo-V02.svg" alt="Nava Strata" width="400">
+</p>
+<p><i>Open source tools for every layer of government service delivery.</i></p>
+<p><b>Strata is a gold-standard target architecture and suite of open-source tools that gives government agencies everything they need to run a modern service.</b></p>
+
+<h4 align="center">
+  <a href="https://github.com/navapbc/template-infra-azure/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/license-apache_2.0-red" alt="Nava Strata is released under the Apache 2.0 license" >
+  </a>
+  <a href="https://github.com/navapbc/template-infra-azure/blob/main/CONTRIBUTING.md">
+    <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen" alt="PRs welcome!" />
+  </a>
+  <a href="https://github.com/navapbc/template-infra-azure/issues">
+    <img src="https://img.shields.io/github/commit-activity/m/navapbc/template-infra-azure" alt="git commit activity" />
+  </a>
+  <a href="https://github.com/navapbc/template-infra-azure/repos/">
+    <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/navapbc/template-infra-azure/total">
+  </a>
+</h4>
+
+# Azure infrastructure template
 
 ## Overview
 
-This is a template repository to set up foundational infrastructure for your application in Azure. It is part of a collection of interoperable [Platform templates](https://github.com/navapbc/platform).
+This is a template repository to set up foundational infrastructure for your application in Azure. It is part of a collection of interoperable [Platform templates](https://github.com/navapbc/strata).
 
 This template includes setup for:
 
@@ -18,7 +39,7 @@ The system architecture will look like this (see [system architecture documentat
 
 ## Application Requirements
 
-This template assumes that you have an application to deploy. See [application requirements](https://github.com/navapbc/template-infra/blob/main/template-only-docs/application-requirements.md) for more information on what is needed to use the infrastructure template. If you're using one of the [Platform application templates](https://github.com/navapbc/platform?tab=readme-ov-file#platform-templates), these requirements are already met.
+This template assumes that you have an application to deploy. See [application requirements](https://github.com/navapbc/template-infra/blob/main/template-only-docs/application-requirements.md) for more information on what is needed to use the infrastructure template. If you're using one of the [Platform application templates](https://github.com/navapbc/strata?tab=readme-ov-file#platform-templates), these requirements are already met.
 
 ## Installation
 
