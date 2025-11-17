@@ -7,7 +7,7 @@ resource "azurerm_key_vault" "vault" {
   tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = var.sku_name
 
-  enable_rbac_authorization = true
+  rbac_authorization_enabled = true
 
   # note these can only be configured once, you'll need to recreate the resource
   # if wanting to change in the future, defaults listed here
