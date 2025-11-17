@@ -23,7 +23,7 @@
 
 ## Overview
 
-This is a template repository to set up foundational infrastructure for your application in Azure. It is part of a collection of interoperable [Platform templates](https://github.com/navapbc/strata).
+This is a template repository to set up foundational infrastructure for your application in Azure. It is part of a collection of interoperable [Strata templates](https://github.com/navapbc/strata).
 
 This template includes setup for:
 
@@ -78,3 +78,15 @@ next step will be apply the updates in smaller pieces with manual merge conflict
 resolution.
 
 **Remember:** Make sure to read the release notes in case there are breaking changes you need to address.
+
+---
+
+## License
+
+This project is licensed under the Apache 2.0 License. See the [LICENSE](LICENSE) file for details.
+
+## Community
+
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Contributing Guidelines](CONTRIBUTING.MD)
+- [Security Policy](SECURITY.md)
