@@ -88,5 +88,5 @@ This project is licensed under the Apache 2.0 License. See the [LICENSE](LICENSE
 ## Community
 
 - [Code of Conduct](CODE_OF_CONDUCT.md)
-- [Contributing Guidelines](CONTRIBUTING.MD)
+- [Contributing Guidelines](CONTRIBUTING.md)
 - [Security Policy](SECURITY.md)
