@@ -95,7 +95,10 @@ _skip_if_exists:
 _exclude:
   - /.git
   - /copier.yml
+  - /code.json
   - /CODEOWNERS
+  - /CODE_OF_CONDUCT.md
   - /CONTRIBUTING.md
   - /LICENSE
   - /README.md
+  - /SECURITY.md
