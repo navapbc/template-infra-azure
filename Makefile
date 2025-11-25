@@ -58,7 +58,7 @@ __check_defined = \
 
 infra-set-up-account: ## Configure and create resources for account and create its tfbackend file
 	@:$(call check_defined, ACCOUNT_NAME, human readable name for account e.g. "prod" or the account alias)
-	./bin/set-up-current-account $(ACCOUNT_NAME) $(args)
+	./bin/set-up-account $(ACCOUNT_NAME) $(args)
 
 infra-configure-network: ## Configure network $NETWORK_NAME
 	@:$(call check_defined, NETWORK_NAME, the name of the network in /infra/networks)

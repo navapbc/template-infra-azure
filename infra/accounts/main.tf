@@ -9,7 +9,7 @@ locals {
   # ARM_SUBSCRIPTION_ID env var.
   shared_subscription_id = try(data.external.account_ids_by_name.result[local.shared_account_name], local.subscription_id)
 
-  # These must match the name of the resources created while bootstrapping the account in set-up-current-account
+  # These must match the name of the resources created while bootstrapping the account in set-up-account
   tf_state_resource_group_name = "${module.project_config.project_name}-tf"
   # This must be unique across the entire Azure service, not just within the resource group.
   tf_state_storage_account_id_str  = join("-", [local.subscription_id, local.tf_state_resource_group_name])
