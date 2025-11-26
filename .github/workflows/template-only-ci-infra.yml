@@ -54,35 +54,14 @@ jobs:
       - name: Install nava-platform CLI
         run: pipx install --python "$(which python)" git+https://github.com/navapbc/platform-cli
 
-      - name: Install infra template
-        run: |
-          # Note: project_name can't be too long since S3 bucket names have a 63
-          # character max length, $RANDOM has a max value of 32767
-          unique_id=$(printf '%.5d' $((RANDOM)))
-          project_name=plt-tst-act-${unique_id}
-          echo "PROJECT_NAME=${project_name}"
-          echo "PROJECT_NAME=${project_name}" >> "$GITHUB_ENV"
-
-          # TODO: add --data-file support to CLI and have as many of these
-          # settings in more maintainable separate file
-          nava-platform infra install --template-uri ./template-infra --version HEAD \
-          --data base_project_name="${project_name}" \
-          --data base_owner=platform-admins \
-          --data base_code_repository_url=${{ github.repositoryUrl }} \
-          --data base_default_region=us-east-1 \
-          --data app_name=app \
-          --data app_local_port=3000 \
-          --data app_has_dev_env_setup=true \
-          project-dir
-
-      - name: Copy template-only things to project copy of template
-        run: |
-          cp -vr ./template-infra/template-only* ./project-dir
-
-      - name: Install example app for infra tests
-        run: |
-          cp -vfr ./project-dir/template-only-app/* ./project-dir/app
-
+      # TODO: configure azure
+      # - uses: azure/login@v2
+      #   with:
+      #     tenant-id: ${{ env.ARM_TENANT_ID }}
+      #     subscription-id: ${{ env.ARM_SUBSCRIPTION_ID }}
+      #     client-id: ${{ env.ARM_CLIENT_ID }}
+      #
+      # AWS setup for reference
       # - name: Configure AWS credentials
       #   uses: aws-actions/configure-aws-credentials@v4
       #   with:
@@ -98,9 +77,9 @@ jobs:
       #     aws-access-key-id: ${{ secrets.TESTER_AWS_ACCESS_KEY_ID }}
       #     aws-secret-access-key: ${{ secrets.TESTER_AWS_SECRET_ACCESS_KEY }}
 
-      - name: Run Terratest
+      - name: Run infra tests
         working-directory: project-dir
-        run: make -f template-only.mak test
+        run: ./template-only-bin/test-infra . ../template-infra
         env:
           # GitHub token needed for GitHub CLI which is used during tests to check GitHub Actions auth
           GH_TOKEN: ${{ secrets.PLATFORM_TESTER_GITHUB_TOKEN }}

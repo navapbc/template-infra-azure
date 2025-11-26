@@ -4,3 +4,39 @@ set -euo pipefail
 # Set has_database to false for template only CI since database setup takes too long
 sed -i.bak "s/has_database = true/has_database = false/" infra/app/app-config/main.tf
 rm infra/app/app-config/main.tf.bak
+
+# some resources like key vault keys are soft-deleted but also _globally_
+# unique, so really need a unique ID not only for the project but for the
+# specific test run
+sed -i.bak "s/value = md5(local.code_repository_url)/value = md5(local.project_name)/" infra/project-config/outputs.tf
+
+# disable the shared hosted zone stuff
+sed -i.bak 's/shared_hosted_zone = "my-project-subdomain.foo.com"/shared_hosted_zone = null/' infra/project-config/networks.tf
+# TODO: disable this?
+sed -i.bak 's/manage_dns = true/manage_dns = false/' infra/project-config/networks.tf
+
+# TODO: should configure the "simpler" network setup?
+      # network = {
+      #   vnet_cidr = "10.0.16.0/20"
+
+      #   subnets = {
+      #     apps-public = {
+      #       # You should evaluate your service's scaling needs and pick a
+      #       # suitable subnet size.
+      #       #
+      #       # https://learn.microsoft.com/en-us/azure/container-apps/networking?tabs=workload-profiles-env%2Cazure-cli#subnet
+      #       subnet_cidr        = "10.0.16.0/24"
+      #       service_endpoints  = ["Microsoft.ContainerRegistry", "Microsoft.KeyVault"]
+      #       service_delegation = ["Microsoft.App/environments"]
+      #       internet_access    = true
+      #     }
+      #     apps-private = {
+      #       subnet_cidr        = "10.0.17.0/24"
+      #       service_endpoints  = ["Microsoft.ContainerRegistry", "Microsoft.KeyVault"]
+      #       service_delegation = ["Microsoft.App/environments"]
+      #     }
+      #     database = {
+      #       subnet_cidr        = "10.0.18.0/24"
+      #       service_delegation = ["Microsoft.DBforPostgreSQL/flexibleServers"]
+      #     }
+      #   }

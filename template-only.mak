@@ -1,7 +1,7 @@
 # This Makefile is for developers working on template-infra itself
 # and is not intended to be used by projects that are using the template
 
-PROJECT_NAME ?= platform-template-infra
+PROJECT_NAME ?= platform-template-infra-azure
 
 .PHONY : \
   clean \

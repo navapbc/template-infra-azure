@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+project_path="$1"
+
+# image_tag=$(git rev-parse HEAD)
+
+template_path=${3:-.}
+code_repository_url=${4:-https://foo.com/org/bar.git}
+tenant_id=${5:-ba06645f-e0cc-44b5-897f-34eb6aa59588}
+# TODO: update this
+cert_email="tanner@navapbc.com"
+
+echo "::group::Install infra template"
+# Note: project_name can't be too long since S3 bucket names have a 63
+# character max length, $RANDOM has a max value of 32767
+unique_id=$(printf '%.5d' $((RANDOM)))
+project_name=plt-tst-act-${unique_id}
+# TODO: remove
+# echo "PROJECT_NAME=${project_name}"
+# echo "PROJECT_NAME=${project_name}" >> "$GITHUB_ENV"
+
+# TODO: add --data-file support to CLI and have as many of these
+# settings in more maintainable separate file
+nava-platform infra install --template-uri "${template_path}" --version HEAD \
+--data base_project_name="${project_name}" \
+--data base_owner=platform-admins \
+--data base_code_repository_url="${code_repository_url}" \
+--data base_default_region=eastus \
+--data base_tenant_id="${tenant_id}" \
+--data base_default_certificate_contact_email="${cert_email}" \
+--data app_name=app \
+--data app_has_dev_env_setup=true \
+"${project_path}"
+echo "::endgroup::"
+echo
+echo '::group::Copy template-only things to project copy of template'
+
+cp -vr "${template_path}"/template-only* "${project_path}"
+
+echo "::endgroup::"
+echo
+echo '::group::Install example app for infra tests'
+
+cp -vfr ./"${project_path}"/template-only-app/* "${project_path}"/app
+
+echo "::endgroup::"
+echo
+echo '::group::Run Terratest'
+
+## Run Terratest
+pushd "${project_path}"
+# TODO: remove
+make -f template-only.mak test PROJECT_NAME="${project_name}" IMAGE_TAG="${image_tag}"

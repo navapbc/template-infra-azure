@@ -9,8 +9,9 @@ import (
     "crypto/md5"
     "encoding/hex"
 
-	"github.com/gruntwork-io/terratest/modules/aws"
+	// "github.com/gruntwork-io/terratest/modules/azure"
 	http_helper "github.com/gruntwork-io/terratest/modules/http-helper"
+	"github.com/gruntwork-io/terratest/modules/retry"
 	"github.com/gruntwork-io/terratest/modules/shell"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/assert"
@@ -18,6 +19,8 @@ import (
 
 var projectName = os.Getenv("PROJECT_NAME")
 var imageTag = os.Getenv("IMAGE_TAG")
+
+const accountId = "4998bf77-b5bd-4bac-8ce7-eecaf9519de2"
 
 const appName = "app"
 const environmentName = "dev"
@@ -34,9 +37,7 @@ func TestEndToEnd(t *testing.T) {
 }
 
 func ValidateAccount(t *testing.T) {
-	projectName := projectName
 	// TODO: update for Azure
-	accountId := "533267424629"
 	region := "us-east-1"
 	ValidateAccountBackend(t, accountId, region, projectName)
 	ValidateGithubActionsAuth(t, accountId, projectName)
@@ -49,8 +50,9 @@ func SubtestNetwork(t *testing.T) {
 }
 
 func SubtestBuildRepository(t *testing.T) {
-	defer TeardownBuildRepository(t)
-	t.Run("SetUpBuildRepository", SetUpBuildRepository)
+	// TODO: not relevant to Azure? Build repo is on the account layer?
+	// defer TeardownBuildRepository(t)
+	// t.Run("SetUpBuildRepository", SetUpBuildRepository)
 	t.Run("ValidateBuildRepository", ValidateBuildRepository)
 	t.Run("Service", SubtestDevEnvironment)
 }
@@ -75,7 +77,7 @@ func SetUpAccount(t *testing.T) {
 	fmt.Println("::group::Setting up account")
 	shell.RunCommand(t, shell.Command{
 		Command:    "make",
-		Args:       []string{"infra-set-up-account", "ACCOUNT_NAME=dev"},
+		Args:       []string{"infra-set-up-account", "ACCOUNT_NAME=lowers", fmt.Sprintf("args=%s", accountId)},
 		WorkingDir: "../",
 	})
 	fmt.Println("::endgroup::")
@@ -97,21 +99,21 @@ func SetUpNetwork(t *testing.T) {
 	fmt.Println("::endgroup::")
 }
 
-func SetUpBuildRepository(t *testing.T) {
-	fmt.Println("::group::Creating build repository resources")
-	shell.RunCommand(t, shell.Command{
-		Command:    "make",
-		Args:       []string{"infra-configure-app-build-repository", fmt.Sprintf("APP_NAME=%s", appName)},
-		WorkingDir: "../",
-	})
-	shell.RunCommand(t, shell.Command{
-		Command:    "make",
-		Args:       []string{"infra-update-app-build-repository", fmt.Sprintf("APP_NAME=%s", appName)},
-		Env:        map[string]string{"TF_CLI_ARGS_apply": "-input=false -auto-approve"},
-		WorkingDir: "../",
-	})
-	fmt.Println("::endgroup::")
-}
+// func SetUpBuildRepository(t *testing.T) {
+// 	fmt.Println("::group::Creating build repository resources")
+// 	shell.RunCommand(t, shell.Command{
+// 		Command:    "make",
+// 		Args:       []string{"infra-configure-app-build-repository", fmt.Sprintf("APP_NAME=%s", appName)},
+// 		WorkingDir: "../",
+// 	})
+// 	shell.RunCommand(t, shell.Command{
+// 		Command:    "make",
+// 		Args:       []string{"infra-update-app-build-repository", fmt.Sprintf("APP_NAME=%s", appName)},
+// 		Env:        map[string]string{"TF_CLI_ARGS_apply": "-input=false -auto-approve"},
+// 		WorkingDir: "../",
+// 	})
+// 	fmt.Println("::endgroup::")
+// }
 
 func SetUpDevEnvironment(t *testing.T) {
 	fmt.Println("::group::Creating web service dev environment")
@@ -132,9 +134,10 @@ func SetUpDevEnvironment(t *testing.T) {
 
 func ValidateAccountBackend(t *testing.T, accountId string, region string, projectName string) {
 	fmt.Println("::group::Validating terraform backend for account")
-	tfStateHash := GetMD5Hash(fmt.Sprintf("%s-%s-tf", accountId, projectName))
-	expectedTfStateBucket := fmt.Sprintf("tfst%s", tfStateHash)[:24]
-	expectedTfStateKey := "infra/account.tfstate"
+	// tfStateHash := GetMD5Hash(fmt.Sprintf("%s-%s-tf", accountId, projectName))
+	// expectedTfStateBucket := fmt.Sprintf("tfst%s", tfStateHash)[:24]
+	// expectedTfStateKey := "infra/account.tfstate"
+
 	// TODO: update for Azure
 	// aws.AssertS3BucketExists(t, region, expectedTfStateBucket)
 	// _, err := aws.GetS3ObjectContentsE(t, region, expectedTfStateBucket, expectedTfStateKey)
@@ -148,7 +151,7 @@ func ValidateGithubActionsAuth(t *testing.T, accountId string, projectName strin
 	// // Check that GitHub Actions can authenticate with AWS
 	// err := shell.RunCommandE(t, shell.Command{
 	// 	Command:    "make",
-	// 	Args:       []string{"infra-check-github-actions-auth", "ACCOUNT_NAME=dev"},
+	// 	Args:       []string{"infra-check-github-actions-auth", "ACCOUNT_NAME=lowers"},
 	// 	WorkingDir: "../",
 	// })
 	// assert.NoError(t, err, "GitHub actions failed to authenticate")
@@ -179,7 +182,7 @@ func ValidateDevEnvironment(t *testing.T) {
 	fmt.Println("::group::Validating ability to call web service endpoint")
 
 	// Wait for service to be stable
-	serviceName := fmt.Sprintf("%s-%s", appName, environmentName)
+	// serviceName := fmt.Sprintf("%s-%s", appName, environmentName)
 	// TODO: update for Azure
 	// shell.RunCommand(t, shell.Command{
 	// 	Command:    "aws",
@@ -221,15 +224,16 @@ func TeardownNetwork(t *testing.T) {
 	fmt.Println("::endgroup::")
 }
 
-func TeardownBuildRepository(t *testing.T) {
-	fmt.Println("::group::Destroying build repository resources")
-	runCommandWithRetry(t, "Destroy build repository resources", maxRetries, sleepBetweenRetries, shell.Command{
-		Command:    "make",
-		Args:       []string{"-f", "template-only.mak", "destroy-app-build-repository"},
-		WorkingDir: "../",
-	})
-	fmt.Println("::endgroup::")
-}
+// TODO: not really relevant for Azure?
+// func TeardownBuildRepository(t *testing.T) {
+// 	fmt.Println("::group::Destroying build repository resources")
+// 	runCommandWithRetry(t, "Destroy build repository resources", maxRetries, sleepBetweenRetries, shell.Command{
+// 		Command:    "make",
+// 		Args:       []string{"-f", "template-only.mak", "destroy-app-build-repository"},
+// 		WorkingDir: "../",
+// 	})
+// 	fmt.Println("::endgroup::")
+// }
 
 func TeardownDevEnvironment(t *testing.T) {
 	fmt.Println("::group::Destroying dev environment resources")
