@@ -35,7 +35,7 @@ locals {
     name           = local.image_repository_name
     repository_url = "${local.image_registry_url}/${local.image_repository_name}"
 
-    db_role_manager_name           = local.db_role_manager_image_repository_name
-    db_role_manager_repository_url = "${local.image_registry_url}/${local.db_role_manager_image_repository_name}"
+    db_role_manager_name           = local.has_database ? local.db_role_manager_image_repository_name : null
+    db_role_manager_repository_url = local.has_database ? "${local.image_registry_url}/${local.db_role_manager_image_repository_name}" : null
   }
 }
