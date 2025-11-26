@@ -83,4 +83,4 @@ jobs:
           environment: dev
 
       - name: Run Terratest
-        run: make infra-test-service APP_NAME=app
+        run: make infra-test-service APP_NAME={{ app_name }}
