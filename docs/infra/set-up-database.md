@@ -41,7 +41,7 @@ Before creating the application resources, you'll need to first build and publis
 
 ```sh
 make db-role-manager-release-build
-make db-role-manager-release-publish APP_NAME=app
+make db-role-manager-release-publish APP_NAME=<APP_NAME>
 ```
 
 Copy the image tag name that was published. You'll need this in the next step.
@@ -51,7 +51,7 @@ Copy the image tag name that was published. You'll need this in the next step.
 Now run the following commands to create the resources. Review the terraform before confirming "yes" to apply the changes. This can take over 5 minutes.
 
 ```bash
-TF_CLI_ARGS_apply="-var=role_manager_image_tag=<IMAGE_TAG>" make infra-update-app-database APP_NAME=app ENVIRONMENT=<ENVIRONMENT>
+TF_CLI_ARGS_apply="-var=role_manager_image_tag=<IMAGE_TAG>" make infra-update-app-database APP_NAME=<APP_NAME> ENVIRONMENT=<ENVIRONMENT>
 ```
 
 ## 4. Create Postgres users
@@ -60,7 +60,7 @@ Trigger the role manager Lambda function that was created in the previous step
 to create the application and `migrator` Postgres users.
 
 ```bash
-make infra-update-app-database-roles APP_NAME=app ENVIRONMENT=<ENVIRONMENT>
+make infra-update-app-database-roles APP_NAME=<APP_NAME> ENVIRONMENT=<ENVIRONMENT>
 ```
 
 ### Important note on Postgres table permissions
@@ -92,7 +92,7 @@ words, if the `migrator` user created a new table `foo` in the `app` schema, the
 ## 5. Check that database roles have been configured properly
 
 ```bash
-make infra-check-app-database-roles APP_NAME=app ENVIRONMENT=<ENVIRONMENT>
+make infra-check-app-database-roles APP_NAME=<APP_NAME> ENVIRONMENT=<ENVIRONMENT>
 ```
 
 ## Set up application environments
