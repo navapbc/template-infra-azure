@@ -1,0 +1,6 @@
+#!/bin/bash
+set -euo pipefail
+
+# Set has_database to false for template only CI since database setup takes too long
+sed -i.bak "s/has_database = true/has_database = false/" infra/app/app-config/main.tf
+rm infra/app/app-config/main.tf.bak
