@@ -15,7 +15,7 @@ locals {
   #    configuration for the service to access the database
   has_database = true
 
-  has_incident_management_service = true
+  has_incident_management_service = false
 
   environment_configs = {
     dev     = module.dev_config
