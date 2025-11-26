@@ -16,6 +16,9 @@ import (
 var projectName = os.Getenv("PROJECT_NAME")
 var imageTag = os.Getenv("IMAGE_TAG")
 
+const appName = "app"
+const environmentName = "dev"
+
 const maxRetries = 3
 const sleepBetweenRetries = 5 * time.Second
 
@@ -94,12 +97,12 @@ func SetUpBuildRepository(t *testing.T) {
 	fmt.Println("::group::Creating build repository resources")
 	shell.RunCommand(t, shell.Command{
 		Command:    "make",
-		Args:       []string{"infra-configure-app-build-repository", "APP_NAME=app"},
+		Args:       []string{"infra-configure-app-build-repository", fmt.Sprintf("APP_NAME=%s", appName)},
 		WorkingDir: "../",
 	})
 	shell.RunCommand(t, shell.Command{
 		Command:    "make",
-		Args:       []string{"infra-update-app-build-repository", "APP_NAME=app"},
+		Args:       []string{"infra-update-app-build-repository", fmt.Sprintf("APP_NAME=%s", appName)},
 		Env:        map[string]string{"TF_CLI_ARGS_apply": "-input=false -auto-approve"},
 		WorkingDir: "../",
 	})
@@ -110,13 +113,13 @@ func SetUpDevEnvironment(t *testing.T) {
 	fmt.Println("::group::Creating web service dev environment")
 	shell.RunCommand(t, shell.Command{
 		Command:    "make",
-		Args:       []string{"infra-configure-app-service", "APP_NAME=app", "ENVIRONMENT=dev"},
+		Args:       []string{"infra-configure-app-service", fmt.Sprintf("APP_NAME=%s", appName), "ENVIRONMENT=dev"},
 		WorkingDir: "../",
 	})
 
 	shell.RunCommand(t, shell.Command{
 		Command:    "make",
-		Args:       []string{"infra-update-app-service", "APP_NAME=app", "ENVIRONMENT=dev"},
+		Args:       []string{"infra-update-app-service", fmt.Sprintf("APP_NAME=%s", appName), "ENVIRONMENT=dev"},
 		Env:        map[string]string{"TF_CLI_ARGS_apply": fmt.Sprintf("-input=false -auto-approve -var=image_tag=%s", imageTag)},
 		WorkingDir: "../",
 	})
@@ -150,14 +153,14 @@ func ValidateBuildRepository(t *testing.T) {
 
 	err := shell.RunCommandE(t, shell.Command{
 		Command:    "make",
-		Args:       []string{"release-build", "APP_NAME=app", fmt.Sprintf("IMAGE_TAG=%s", imageTag)},
+		Args:       []string{"release-build", fmt.Sprintf("APP_NAME=%s", appName), fmt.Sprintf("IMAGE_TAG=%s", imageTag)},
 		WorkingDir: "../",
 	})
 	assert.NoError(t, err, "Could not build release")
 
 	err = shell.RunCommandE(t, shell.Command{
 		Command:    "make",
-		Args:       []string{"release-publish", "APP_NAME=app", fmt.Sprintf("IMAGE_TAG=%s", imageTag)},
+		Args:       []string{"release-publish", fmt.Sprintf("APP_NAME=%s", appName), fmt.Sprintf("IMAGE_TAG=%s", imageTag)},
 		WorkingDir: "../",
 	})
 	assert.NoError(t, err, "Could not publish release")
@@ -169,8 +172,6 @@ func ValidateDevEnvironment(t *testing.T) {
 	fmt.Println("::group::Validating ability to call web service endpoint")
 
 	// Wait for service to be stable
-	appName := "app"
-	environmentName := "dev"
 	serviceName := fmt.Sprintf("%s-%s", appName, environmentName)
 	shell.RunCommand(t, shell.Command{
 		Command:    "aws",
@@ -180,7 +181,7 @@ func ValidateDevEnvironment(t *testing.T) {
 
 	// Hit the service endpoint to see if it returns status 200
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir: "../infra/app/service/",
+		TerraformDir: fmt.Sprintf("../infra/%s/service/", appName),
 	})
 	serviceEndpoint := terraform.Output(t, terraformOptions, "service_endpoint")
 	// Not checking the /health endpoint as we don't deploy the database for
