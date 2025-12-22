@@ -180,7 +180,7 @@ cd -
 
 module_dir=infra/accounts
 backend_config_name="${account_name}.${account_id}"
-./bin/create-tfbackend "${module_dir}" "${backend_config_name}" "${tf_state_key}"
+./bin/create-tfbackend "${module_dir}" "${backend_config_name}" "${account_name}" "${tf_state_key}"
 
 # Configure vars file for the account
 tfvars_file=infra/accounts/"${backend_config_name}".tfvars
