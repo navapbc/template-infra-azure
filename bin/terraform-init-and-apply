@@ -17,4 +17,6 @@ rest_args=("${@:3}")
 
 ./bin/terraform-init "${module_dir}" "${config_name}"
 
-./bin/terraform-apply "${module_dir}" "${config_name}" "${rest_args[@]}"
+# rest_args oddness to support Bash < v4.4
+# https://stackoverflow.com/a/7577209
+./bin/terraform-apply "${module_dir}" "${config_name}" ${rest_args[@]+"${rest_args[@]}"}

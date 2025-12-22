@@ -44,4 +44,6 @@ if [ -f "${tf_vars_file}" ]; then
   tf_apply_args+=("-var-file=${tf_vars_file}")
 fi
 
-terraform apply "${tf_apply_args[@]}"
+# tf_apply_args oddness to support Bash < v4.4
+# https://stackoverflow.com/a/7577209
+terraform apply ${tf_apply_args[@]+"${tf_apply_args[@]}"}
