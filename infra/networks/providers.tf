@@ -1,7 +1,4 @@
 locals {
-  shared_account_name    = module.project_config.network_configs[module.app_config.shared_network_name].account_name
-  shared_subscription_id = data.external.account_ids_by_name.result[local.shared_account_name]
-
   # this would typically be either the current subscription or the shared
   # subscription, but make specific provider block for flexibility
   domain_subscription_id = data.external.account_ids_by_name.result[local.hosted_zone_account_names_in_network[0]]
@@ -38,15 +35,6 @@ provider "azurerm" {
   resource_providers_to_register = ["Microsoft.App"]
 
   subscription_id = data.external.account_ids_by_name.result[local.network_config.account_name]
-}
-
-provider "azurerm" {
-  alias = "shared"
-
-  features {}
-  storage_use_azuread = true
-
-  subscription_id = local.shared_subscription_id
 }
 
 provider "azurerm" {
