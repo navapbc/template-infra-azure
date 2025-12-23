@@ -16,6 +16,6 @@ locals {
     is_subdomain_of_network = local.is_subdomain_of_network
     cert_name               = var.cert_name != null ? var.cert_name : (local.is_subdomain_of_network ? "*.${local.network_hosted_zone}" : local.domain_name)
 
-    hosted_zone_account_name = local.is_network_zone_sub_to_shared ? module.project_config.shared_account_name : (local.network_config.manage_dns ? local.network_config.account_name : null)
+    hosted_zone_account_name = local.is_network_zone_sub_to_shared ? module.project_config.shared_account_name : (local.network_config.domain_config.manage_dns ? local.network_config.account_name : null)
   }
 }
