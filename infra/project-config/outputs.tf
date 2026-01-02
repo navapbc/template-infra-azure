@@ -67,3 +67,13 @@ output "project_unique_id" {
 output "infra_admins" {
   value = local.infra_admins
 }
+
+output "azure_resource_providers" {
+  description = "Azure resource providers that this project uses"
+  value       = local.azure_resource_providers
+}
+
+output "azure_resource_providers_autoenable" {
+  description = "Whether or not to have the azurerm Terraform provider attempt to automatically enable the required resource providers"
+  value       = local.azure_resource_providers_autoenable
+}

@@ -26,6 +26,23 @@ The Azure account setup process will:
     `infra/project-config/networks.tf` to the name you will use for
     `<ACCOUNT_NAME>` below, which is where shared project resources will be
     created.
+  * If you do not have permission to register Azure Resource Providers in the
+    target account take the following steps:
+    * Set `azure_resource_providers_autoenable = false` in `infra/project-config/azure_resource_providers.tf`
+    * Determine if there are resource providers that need to be registered for the project.
+      * Via CLI: run `bin/check-registered-resource-providers [subscription-id]`
+      * Via the Azure Portal:
+        * Log in to the Azure Portal
+        * Navigate to the appropriate Subscription page, then in the sidebar go
+          to Settings > Resource Providers
+        * Set the "Status" filter to "Registered"
+        * Lookup each value from `azure_resource_providers` to see if they are
+          in this registered list. Note any that are not.
+    * Provide the list of `azure_resource_providers` that are not already
+      registered to someone that _does_ have permission to register them.
+    * Depending on which providers are missing you may be able to proceed with
+      setting up the account layer, but in general you will need to wait until
+      the providers are registered.
   * You will ultimately want to set an `infra_admins` entry for the given
     account name, but you can do that after initial creation. Note only the
     person who runs the initial create will be able to run the update.
