@@ -29,21 +29,24 @@ data "external" "account_ids_by_name" {
 }
 
 provider "azurerm" {
-  features {}
+  subscription_id = data.external.account_ids_by_name.result[local.network_config.account_name]
+
+  resource_provider_registrations = "none"
+
   storage_use_azuread = true
 
-  resource_providers_to_register = ["Microsoft.App"]
-
-  subscription_id = data.external.account_ids_by_name.result[local.network_config.account_name]
+  features {}
 }
 
 provider "azurerm" {
-  alias = "domain"
+  alias           = "domain"
+  subscription_id = local.domain_subscription_id
 
-  features {}
+  resource_provider_registrations = "none"
+
   storage_use_azuread = true
 
-  subscription_id = local.domain_subscription_id
+  features {}
 }
 
 provider "acme" {
