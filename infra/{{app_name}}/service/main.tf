@@ -44,21 +44,26 @@ data "external" "account_ids_by_name" {
 }
 
 provider "azurerm" {
-  use_oidc = true
-  features {}
-
   subscription_id = data.external.account_ids_by_name.result[local.environment_config.account_name]
+
+  resource_provider_registrations = "none"
+
+  use_oidc = true
+
+  features {}
 }
 
 provider "azurerm" {
   alias = "domain"
-
-  use_oidc = true
-  features {}
-
   # fall back to current subscription so provider can be initialized, but we
   # won't use it if hosted_zone_subscription_id is not defined
   subscription_id = local.hosted_zone_subscription_id != null ? local.hosted_zone_subscription_id : data.external.account_ids_by_name.result[local.environment_config.account_name]
+
+  resource_provider_registrations = "none"
+
+  use_oidc = true
+
+  features {}
 }
 
 module "project_config" {
