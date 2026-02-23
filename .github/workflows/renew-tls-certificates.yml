@@ -1,0 +1,80 @@
+name: Renew TLS Certificates
+
+on:
+  schedule:
+    # Run monthly on the 1st at midnight UTC
+    # Gives ~60 day buffer on 90-day Let's Encrypt certs
+    - cron: "0 0 1 * *"
+  workflow_dispatch:
+    inputs:
+      network_name:
+        description: "Network to renew certificates for (leave empty for all)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  renew-certs:
+    name: Renew certs (${{ matrix.network_name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        network_name: [dev, staging, prod]
+
+    steps:
+      - name: Check if network requested
+        id: check
+        run: |
+          if [[ -n "${{ inputs.network_name }}" && "${{ inputs.network_name }}" != "${{ matrix.network_name }}" ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.check.outputs.skip != 'true'
+
+      - name: Set up Terraform
+        if: steps.check.outputs.skip != 'true'
+        uses: ./.github/actions/setup-terraform
+
+      - name: Configure Azure credentials
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          terraform -chdir=infra/project-config init > /dev/null
+          terraform -chdir=infra/project-config apply -auto-approve > /dev/null
+
+          account_name=$(./bin/account-name-for-network "${{ matrix.network_name }}")
+          account_id=$(./bin/account-ids-by-name | jq -r ".${account_name}")
+
+          TENANT_ID=$(terraform -chdir=infra/project-config output -raw tenant_id)
+          CLIENT_ID=$(terraform -chdir=infra/project-config output -json github_actions_azure_config | jq -r ".${account_name}.client_id")
+
+          {
+            echo "ARM_TENANT_ID=$TENANT_ID"
+            echo "ARM_SUBSCRIPTION_ID=$account_id"
+            echo "ARM_CLIENT_ID=$CLIENT_ID"
+          } >> "$GITHUB_ENV"
+
+      - uses: azure/login@v2
+        if: steps.check.outputs.skip != 'true'
+        with:
+          tenant-id: ${{ env.ARM_TENANT_ID }}
+          subscription-id: ${{ env.ARM_SUBSCRIPTION_ID }}
+          client-id: ${{ env.ARM_CLIENT_ID }}
+
+      - name: Initialize Terraform
+        if: steps.check.outputs.skip != 'true'
+        run: ./bin/terraform-init infra/networks "${{ matrix.network_name }}"
+
+      - name: Renew certificates
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          terraform -chdir=infra/networks plan \
+            -var="network_name=${{ matrix.network_name }}" \
+            -target='module.domain' \
+            -input=false
+        env:
+          ARM_USE_OIDC: true
