@@ -1,9 +1,6 @@
 name: Renew TLS Certificates
 
 on:
-  push:
-    branches:
-      - renew-tls-certificates
   schedule:
     # Run monthly on the 1st at midnight UTC
     # Gives ~60 day buffer on 90-day Let's Encrypt certs
@@ -113,7 +110,22 @@ jobs:
             const network = '${{ matrix.network_name }}';
             const summary = `${{ steps.plan.outputs.summary }}`;
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const today = new Date().toISOString().slice(0, 10);
+            // Ensure the tls-renewal label exists
+            try {
+              await github.rest.issues.getLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'tls-renewal',
+              });
+            } catch {
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'tls-renewal',
+                color: 'D4C5F9',
+                description: 'TLS certificate renewal needed',
+              });
+            }
 
             // Check for an existing open issue for this network to avoid duplicates
             const existing = await github.rest.issues.listForRepo({
