@@ -2,9 +2,9 @@ name: Renew TLS Certificates
 
 on:
   schedule:
-    # Run monthly on the 1st at midnight UTC
-    # Gives ~60 day buffer on 90-day Let's Encrypt certs
-    - cron: "0 0 1 * *"
+    # Run twice a month (1st and 15th) at midnight UTC
+    # Gives ample buffer on 90-day Let's Encrypt certs
+    - cron: "0 0 1,15 * *"
   workflow_dispatch:
     inputs:
       network_name:
