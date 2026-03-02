@@ -1,19 +1,26 @@
 name: Configure Azure Credentials
 description: |
-  Configure Azure Credentials for a given application and environment so that
-  the GitHub Actions workflow can access Azure resources.
+  Configure Azure Credentials so that the GitHub Actions workflow can access
+  Azure resources.
 
   This is a wrapper around https://github.com/azure/login that first determines
   the tenant, subscription, and client ids based on the configuration in
   app-config.
 
+  Authenticate using one of the following options:
+  1. Authenticate by network_name
+  2. Authenticate by app_name and environment
+
 inputs:
+  network_name:
+    description: 'Name of network (e.g. dev, staging, prod)'
+    required: false
   app_name:
     description: 'Name of application folder under /infra'
-    required: true
+    required: false
   environment:
     description: 'Name of environment (dev, staging, prod) that resources live in, or "shared" for resources that are shared across environments'
-    required: true
+    required: false
 
 runs:
   using: "composite"
@@ -33,7 +40,7 @@ runs:
     - name: Get account name from network
       id: get-account-name
       run: |
-        network_name="${{ steps.get-network-name.outputs.network_name }}"
+        network_name="${{ inputs.network_name || steps.get-network-name.outputs.network_name }}"
         echo "Get account name for network: ${network_name}"
 
         account_name=$(./bin/account-name-for-network "${network_name}")

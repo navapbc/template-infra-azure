@@ -11,20 +11,14 @@ on:
         description: "Network to renew certificates for (leave empty for all)"
         required: false
         type: string
-      apply:
-        description: "Set to true to apply the renewal (default is plan only)"
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: read
   id-token: write
-  issues: write
 
 jobs:
-  check-certs:
-    name: "${{ inputs.apply && 'Apply' || 'Plan' }} (${{ matrix.network_name }})"
+  renew-certs:
+    name: Renew certs (${{ matrix.network_name }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -48,152 +42,23 @@ jobs:
 
       - name: Configure Azure credentials
         if: steps.check.outputs.skip != 'true'
-        run: |
-          terraform -chdir=infra/project-config init > /dev/null
-          terraform -chdir=infra/project-config apply -auto-approve > /dev/null
-
-          account_name=$(./bin/account-name-for-network "${{ matrix.network_name }}")
-          account_id=$(./bin/account-ids-by-name | jq -r ".${account_name}")
-
-          TENANT_ID=$(terraform -chdir=infra/project-config output -raw tenant_id)
-          CLIENT_ID=$(terraform -chdir=infra/project-config output -json github_actions_azure_config | jq -r ".${account_name}.client_id")
-
-          {
-            echo "ARM_TENANT_ID=$TENANT_ID"
-            echo "ARM_SUBSCRIPTION_ID=$account_id"
-            echo "ARM_CLIENT_ID=$CLIENT_ID"
-          } >> "$GITHUB_ENV"
-
-      - uses: azure/login@v2
-        if: steps.check.outputs.skip != 'true'
+        uses: ./.github/actions/configure-azure-credentials
         with:
-          tenant-id: ${{ env.ARM_TENANT_ID }}
-          subscription-id: ${{ env.ARM_SUBSCRIPTION_ID }}
-          client-id: ${{ env.ARM_CLIENT_ID }}
+          network_name: ${{ matrix.network_name }}
 
       - name: Initialize Terraform
         if: steps.check.outputs.skip != 'true'
         run: ./bin/terraform-init infra/networks "${{ matrix.network_name }}"
 
-      - name: Plan certificate renewal
-        id: plan
-        if: steps.check.outputs.skip != 'true'
-        run: |
-          set +e
-          terraform -chdir=infra/networks plan \
-            -var="network_name=${{ matrix.network_name }}" \
-            -target='module.domain' \
-            -input=false \
-            -detailed-exitcode \
-            -no-color 2>&1 | tee /tmp/plan-output.txt
-          exit_code=${PIPESTATUS[0]}
-          set -e
-
-          if [[ $exit_code -eq 2 ]]; then
-            echo "has_changes=true" >> "$GITHUB_OUTPUT"
-            summary=$(grep -E "^Plan:" /tmp/plan-output.txt || echo "Changes detected")
-            echo "summary=$summary" >> "$GITHUB_OUTPUT"
-          elif [[ $exit_code -eq 0 ]]; then
-            echo "has_changes=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "Plan failed with exit code ${exit_code}"
-            exit "${exit_code}"
-          fi
-        env:
-          ARM_USE_OIDC: true
-
-      - name: Create issue for review
-        if: steps.plan.outputs.has_changes == 'true' && !inputs.apply
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const network = '${{ matrix.network_name }}';
-            const summary = `${{ steps.plan.outputs.summary }}`;
-            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            // Ensure the tls-renewal label exists
-            try {
-              await github.rest.issues.getLabel({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                name: 'tls-renewal',
-              });
-            } catch {
-              await github.rest.issues.createLabel({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                name: 'tls-renewal',
-                color: 'D4C5F9',
-                description: 'TLS certificate renewal needed',
-              });
-            }
-
-            // Check for an existing open issue for this network to avoid duplicates
-            const existing = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'tls-renewal',
-              per_page: 100,
-            });
-            const duplicate = existing.data.find(i => i.title.includes(`(${network})`));
-            if (duplicate) {
-              console.log(`Open issue already exists: #${duplicate.number}`);
-              return;
-            }
-
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `TLS certificate renewal needed (${network})`,
-              body: [
-                `## TLS Certificate Renewal — ${network}`,
-                '',
-                `The monthly check found certificates that need renewal in the **${network}** network.`,
-                '',
-                `**${summary}**`,
-                '',
-                `[View plan output](${runUrl})`,
-                '',
-                '### To apply the renewal',
-                '',
-                'Go to **Actions > Renew TLS Certificates > Run workflow** and set:',
-                `- \`network_name\` = \`${network}\``,
-                '- `apply` = `true`',
-              ].join('\n'),
-              labels: ['tls-renewal'],
-            });
-
       - name: Renew certificates
-        if: steps.plan.outputs.has_changes == 'true' && inputs.apply
+        if: steps.check.outputs.skip != 'true'
         run: |
           terraform -chdir=infra/networks apply \
             -var="network_name=${{ matrix.network_name }}" \
-            -target='module.domain' \
+            -target='module.domain.acme_registration.reg' \
+            -target='module.domain.acme_certificate.certificate' \
+            -target='module.domain.azurerm_key_vault_certificate.key_vault_certificate' \
             -auto-approve \
             -input=false
         env:
           ARM_USE_OIDC: true
-
-      - name: Close renewal issue
-        if: steps.plan.outputs.has_changes == 'true' && inputs.apply && success()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const network = '${{ matrix.network_name }}';
-            const issues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'tls-renewal',
-              per_page: 100,
-            });
-            const issue = issues.data.find(i => i.title.includes(`(${network})`));
-            if (issue) {
-              await github.rest.issues.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issue.number,
-                state: 'closed',
-                state_reason: 'completed',
-              });
-            }
