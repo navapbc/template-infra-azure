@@ -28,7 +28,7 @@ Before setting up the network you'll need to have:
    1. Update `network_name` for your application environments. This mapping
       ensures that each network is configured appropriately based on the
       application(s) in that network (see `local.apps_in_network` in
-      [/infra/networks/main.tf](/infra/networks/main.tf)). Failure to set the
+      [/infra/networks/main.tf.jinja](/infra/networks/main.tf.jinja)). Failure to set the
       network name properly means that the network layer may not receive the
       correct application configurations (e.g., `has_database`).
 
