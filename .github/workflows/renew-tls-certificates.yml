@@ -20,6 +20,7 @@ jobs:
   renew-certs:
     name: Renew certs (${{ matrix.network_name }})
     runs-on: ubuntu-latest
+    concurrency: renew-tls-certs-${{ matrix.network_name }}
     strategy:
       fail-fast: false
       matrix:

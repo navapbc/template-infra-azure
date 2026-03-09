@@ -53,7 +53,6 @@ runs:
       run: |
         echo "::group::Azure account authentication details"
 
-        network_name="${{ steps.get-network-name.outputs.network_name }}"
         account_name="${{ steps.get-account-name.outputs.account_name }}"
 
         terraform -chdir=infra/project-config init > /dev/null
