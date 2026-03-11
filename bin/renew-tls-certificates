@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# -----------------------------------------------------------------------------
+# Renew TLS certificates for the specified network by running terraform apply
+# targeted at the certificate resources in the domain module.
+#
+# Positional parameters:
+# network_name (required) - The network to renew certificates for (e.g. dev, staging, prod)
+# -----------------------------------------------------------------------------
+set -euo pipefail
+
+network_name="$1"
+
+./bin/terraform-init infra/networks "${network_name}"
+./bin/terraform-apply infra/networks "${network_name}" \
+  -target='module.domain.acme_registration.reg' \
+  -target='module.domain.acme_certificate.certificate' \
+  -target='module.domain.azurerm_key_vault_certificate.key_vault_certificate' \
+  -auto-approve \
+  -input=false

@@ -47,19 +47,8 @@ jobs:
         with:
           network_name: ${{ matrix.network_name }}
 
-      - name: Initialize Terraform
-        if: steps.check.outputs.skip != 'true'
-        run: ./bin/terraform-init infra/networks "${{ matrix.network_name }}"
-
       - name: Renew certificates
         if: steps.check.outputs.skip != 'true'
-        run: |
-          terraform -chdir=infra/networks apply \
-            -var="network_name=${{ matrix.network_name }}" \
-            -target='module.domain.acme_registration.reg' \
-            -target='module.domain.acme_certificate.certificate' \
-            -target='module.domain.azurerm_key_vault_certificate.key_vault_certificate' \
-            -auto-approve \
-            -input=false
+        run: ./bin/renew-tls-certificates "${{ matrix.network_name }}"
         env:
           ARM_USE_OIDC: true
