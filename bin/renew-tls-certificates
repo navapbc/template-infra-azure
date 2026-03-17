@@ -12,6 +12,7 @@ network_name="$1"
 
 ./bin/terraform-init infra/networks "${network_name}"
 ./bin/terraform-apply infra/networks "${network_name}" \
+  -var="network_name=${network_name}" \
   -target='module.domain.acme_registration.reg' \
   -target='module.domain.acme_certificate.certificate' \
   -target='module.domain.azurerm_key_vault_certificate.key_vault_certificate' \
