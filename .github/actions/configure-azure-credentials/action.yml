@@ -86,3 +86,20 @@ runs:
         tenant-id: ${{ env.ARM_TENANT_ID }}
         subscription-id: ${{ steps.get-azure-config.outputs.subscription_id }}
         client-id: ${{ env.ARM_CLIENT_ID }}
+
+    - name: Set up OIDC federated token for Azure SDK
+      run: |
+        # The ACME provider's DNS solver uses the Go Azure SDK
+        # (DefaultAzureCredential), which doesn't understand ARM_* env vars.
+        # Request a GitHub OIDC token and save it so the SDK's
+        # WorkloadIdentityCredential can authenticate.
+        token=$(curl -sS \
+          -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+          "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=api://AzureADTokenExchange" \
+          | jq -r '.value')
+
+        token_file="${RUNNER_TEMP}/azure-oidc-token"
+        echo "${token}" > "${token_file}"
+
+        echo "AZURE_FEDERATED_TOKEN_FILE=${token_file}" >> "$GITHUB_ENV"
+      shell: bash
