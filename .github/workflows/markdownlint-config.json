@@ -11,6 +11,9 @@
         },
         {
             "pattern": "https://github.com/navapbc/template-infra-azure"
+        },
+        {
+            "pattern": "infra/networks/main\\.tf$"
         }
     ],
     "replacementPatterns": [
