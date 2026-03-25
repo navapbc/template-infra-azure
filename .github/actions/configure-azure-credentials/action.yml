@@ -1,19 +1,26 @@
 name: Configure Azure Credentials
 description: |
-  Configure Azure Credentials for a given application and environment so that
-  the GitHub Actions workflow can access Azure resources.
+  Configure Azure Credentials so that the GitHub Actions workflow can access
+  Azure resources.
 
   This is a wrapper around https://github.com/azure/login that first determines
   the tenant, subscription, and client ids based on the configuration in
   app-config.
 
+  Authenticate using one of the following options:
+  1. Authenticate by network_name
+  2. Authenticate by app_name and environment
+
 inputs:
+  network_name:
+    description: 'Name of network (e.g. dev, staging, prod)'
+    required: false
   app_name:
     description: 'Name of application folder under /infra'
-    required: true
+    required: false
   environment:
     description: 'Name of environment (dev, staging, prod) that resources live in, or "shared" for resources that are shared across environments'
-    required: true
+    required: false
 
 runs:
   using: "composite"
@@ -33,7 +40,7 @@ runs:
     - name: Get account name from network
       id: get-account-name
       run: |
-        network_name="${{ steps.get-network-name.outputs.network_name }}"
+        network_name="${{ inputs.network_name || steps.get-network-name.outputs.network_name }}"
         echo "Get account name for network: ${network_name}"
 
         account_name=$(./bin/account-name-for-network "${network_name}")
@@ -43,10 +50,10 @@ runs:
       shell: bash
 
     - name: Get Azure client id, tenant id, and subscription id
+      id: get-azure-config
       run: |
         echo "::group::Azure account authentication details"
 
-        network_name="${{ steps.get-network-name.outputs.network_name }}"
         account_name="${{ steps.get-account-name.outputs.account_name }}"
 
         terraform -chdir=infra/project-config init > /dev/null
@@ -63,14 +70,20 @@ runs:
 
         echo "::endgroup::"
 
-        echo "Setting env vars ARM_TENANT_ID, ARM_SUBSCRIPTION_ID, and ARM_CLIENT_ID..."
+        # Set ARM_TENANT_ID and ARM_CLIENT_ID as env vars for terraform.
+        # ARM_SUBSCRIPTION_ID is intentionally not set — the infra code
+        # specifies subscription_id in each provider block, and setting
+        # the env var can cause issues with cross-subscription resources.
         echo "ARM_TENANT_ID=$TENANT_ID" >> "$GITHUB_ENV"
-        echo "ARM_SUBSCRIPTION_ID=$account_id" >> "$GITHUB_ENV"
         echo "ARM_CLIENT_ID=$CLIENT_ID" >> "$GITHUB_ENV"
+
+        # Pass subscription id as step output for azure/login only
+        echo "subscription_id=${account_id}" >> "$GITHUB_OUTPUT"
       shell: bash
 
     - uses: azure/login@v2
       with:
         tenant-id: ${{ env.ARM_TENANT_ID }}
-        subscription-id: ${{ env.ARM_SUBSCRIPTION_ID }}
+        subscription-id: ${{ steps.get-azure-config.outputs.subscription_id }}
         client-id: ${{ env.ARM_CLIENT_ID }}
+

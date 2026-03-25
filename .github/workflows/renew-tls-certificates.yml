@@ -1,0 +1,54 @@
+name: Renew TLS Certificates
+
+on:
+  schedule:
+    # Run twice a month (1st and 15th) at midnight UTC
+    # Gives ample buffer on 90-day Let's Encrypt certs
+    - cron: "0 0 1,15 * *"
+  workflow_dispatch:
+    inputs:
+      network_name:
+        description: "Network to renew certificates for (leave empty for all)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  renew-certs:
+    name: Renew certs (${{ matrix.network_name }})
+    runs-on: ubuntu-latest
+    concurrency: renew-tls-certs-${{ matrix.network_name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        network_name: [dev, staging, prod]
+
+    steps:
+      - name: Check if network requested
+        id: check
+        run: |
+          if [[ -n "${{ inputs.network_name }}" && "${{ inputs.network_name }}" != "${{ matrix.network_name }}" ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.check.outputs.skip != 'true'
+
+      - name: Set up Terraform
+        if: steps.check.outputs.skip != 'true'
+        uses: ./.github/actions/setup-terraform
+
+      - name: Configure Azure credentials
+        if: steps.check.outputs.skip != 'true'
+        uses: ./.github/actions/configure-azure-credentials
+        with:
+          network_name: ${{ matrix.network_name }}
+
+      - name: Renew certificates
+        if: steps.check.outputs.skip != 'true'
+        run: ./bin/renew-tls-certificates "${{ matrix.network_name }}"
+        env:
+          ARM_USE_OIDC: true
