@@ -130,6 +130,12 @@ module "service" {
     }
   ]
 
+  storage_vars = module.app_config.has_blob_storage ? {
+    storage_account_id   = module.storage[0].storage_account_id
+    storage_account_name = module.storage[0].storage_account_name
+    container_name       = module.storage[0].container_name
+  } : null
+
   db_vars = module.app_config.has_database ? {
     migrator_group_object_id = module.database[0].migrator_object_id
     app_group_object_id      = module.database[0].app_object_id

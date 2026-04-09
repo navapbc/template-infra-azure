@@ -13,7 +13,8 @@ locals {
   # 2. Each environment's config will have a database_config property that is used to
   #    pass db_vars into the infra/modules/service module, which provides the necessary
   #    configuration for the service to access the database
-  has_database = true
+  has_database     = true
+  has_blob_storage = true
 
   has_incident_management_service = false
 

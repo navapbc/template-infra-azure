@@ -1,3 +1,4 @@
 flask
 psycopg[binary]
 azure-identity
+azure-storage-blob

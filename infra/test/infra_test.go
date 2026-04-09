@@ -68,13 +68,18 @@ func WaitForServiceToBeStable(t *testing.T, workspaceName string, terraformOptio
 }
 
 func RunEndToEndTests(t *testing.T, terraformOptions *terraform.Options) {
-	fmt.Println("::group::Check service for healthy status 200")
 	serviceEndpoint := terraform.Output(t, terraformOptions, "service_endpoint")
-
 	tlsConfig := tls.Config{InsecureSkipVerify: true}
 
+	fmt.Println("::group::Check service for healthy status 200")
 	http_helper.HttpGetWithRetryWithCustomValidation(t, serviceEndpoint+"/health", &tlsConfig, 5, 1*time.Second, func(responseStatus int, responseBody string) bool {
 		return responseStatus == 200
+	})
+	fmt.Println("::endgroup::")
+
+	fmt.Println("::group::Check document-upload page loads")
+	http_helper.HttpGetWithRetryWithCustomValidation(t, serviceEndpoint+"/document-upload", &tlsConfig, 5, 1*time.Second, func(responseStatus int, responseBody string) bool {
+		return responseStatus == 200 && strings.Contains(responseBody, "multipart/form-data")
 	})
 	fmt.Println("::endgroup::")
 }
