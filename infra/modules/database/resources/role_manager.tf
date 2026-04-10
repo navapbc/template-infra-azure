@@ -1,5 +1,6 @@
 locals {
-  role_manager_name = "${var.resource_group_name}-role-manager"
+  role_manager_name     = "${var.resource_group_name}-role-manager"
+  role_manager_job_name = "${var.resource_group_name}-rm-job"
 }
 
 data "azurerm_container_app_environment" "env" {
@@ -38,7 +39,7 @@ resource "azuread_group_member" "db_role_manager_migrator" {
 }
 
 resource "azurerm_container_app_job" "db_role_manager" {
-  name                         = "${local.role_manager_name}-job"
+  name                         = local.role_manager_job_name
   location                     = var.location
   resource_group_name          = var.resource_group_name
   container_app_environment_id = data.azurerm_container_app_environment.env.id
