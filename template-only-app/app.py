@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 
 import click
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 
 import storage
 from db import get_db_connection
@@ -58,18 +58,27 @@ def feature_flags():
     return f"<p>Feature foo is {foo_status}</p><p>Feature bar is {bar_status}</p>"
 
 
-@app.route("/document-upload")
+@app.route("/document-upload", methods=["GET", "POST"])
 def document_upload():
-    path = f"uploads/{datetime.now().date()}/${{filename}}"
-    upload_url, fields = storage.create_upload_url(path)
-    additional_fields = "".join(
-        [
-            f'<input type="hidden" name="{name}" value="{value}">'
-            for name, value in fields.items()
-        ]
+    if request.method == "POST":
+        if "file" not in request.files:
+            return "No file part", 400
+        file = request.files["file"]
+        if file.filename == "":
+            return "No selected file", 400
+        path = f"uploads/{datetime.now().date()}/{file.filename}"
+        storage.upload_file(path, file.read())
+        return (
+            f"<p>File uploaded successfully to {path}</p>"
+            f'<p><a href="/document-upload">Upload another</a></p>'
+        )
+
+    return (
+        '<form method="post" enctype="multipart/form-data">'
+        '<input type="file" name="file">'
+        '<input type="submit" value="Upload">'
+        "</form>"
     )
-    # Note: Additional fields should come first before the file and submit button
-    return f'<form method="post" action="{upload_url}" enctype="multipart/form-data">{additional_fields}<input type="file" name="file"><input type="submit"></form>'
 
 
 @app.route("/secrets")
