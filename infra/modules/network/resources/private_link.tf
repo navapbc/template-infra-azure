@@ -37,4 +37,5 @@ module "container_registry_endpoint" {
   subnet_id           = local.use_private_endpoints ? module.vnet.subnets[var.network_config.network.private_endpoints_subnet_name].id : null
   resource_id         = var.container_registry_id
   resource_group_name = var.resource_group_name
+  resource_location   = try(var.network_config.network.location, null)
 }
