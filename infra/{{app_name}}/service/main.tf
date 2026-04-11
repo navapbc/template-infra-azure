@@ -119,6 +119,8 @@ module "service" {
   memory                 = local.service_config.memory
   desired_instance_count = local.service_config.desired_instance_count
 
+  extra_environment_variables = local.service_config.extra_environment_variables
+
   # Note: The secrets will reference the specific hash of the current revision
   # If the secret is manually updated, you will need to re-run terraform apply
   # for the new version to be picked up and updated in the revision
