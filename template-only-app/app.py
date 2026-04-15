@@ -4,6 +4,8 @@ from datetime import datetime
 
 import click
 from flask import Flask, render_template, request
+from markupsafe import escape
+from werkzeug.utils import secure_filename
 
 import storage
 from db import get_db_connection
@@ -14,6 +16,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB upload limit
 
 
 def main():
@@ -42,11 +45,11 @@ def health():
 def migrations():
     conn = get_db_connection()
     cur = conn.execute("SELECT last_migration_date FROM migrations")
-    row = cur.fetchone
+    row = cur.fetchone()
     if row is None:
         return "No migrations run"
     else:
-        last_migration_date = cur.fetchone()[0]
+        last_migration_date = row[0]
         return f"Last migration on {last_migration_date}"
 
 
@@ -66,10 +69,13 @@ def document_upload():
         file = request.files["file"]
         if file.filename == "":
             return "No selected file", 400
-        path = f"uploads/{datetime.now().date()}/{file.filename}"
+        filename = secure_filename(file.filename)
+        if not filename:
+            return "Invalid filename", 400
+        path = f"uploads/{datetime.now().date()}/{filename}"
         storage.upload_file(path, file.read())
         return (
-            f"<p>File uploaded successfully to {path}</p>"
+            f"<p>File uploaded successfully to {escape(path)}</p>"
             f'<p><a href="/document-upload">Upload another</a></p>'
         )
 
