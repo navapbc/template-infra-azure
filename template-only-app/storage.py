@@ -23,11 +23,6 @@ def _get_container_name():
     return os.environ.get("AZURE_STORAGE_CONTAINER_NAME", "documents")
 
 
-def create_upload_url(path):
-    """Return the local upload endpoint for server-side upload."""
-    return "/document-upload", {}
-
-
 def download_file(path):
     """Download a blob and return its content as bytes."""
     client = _get_blob_service_client()
