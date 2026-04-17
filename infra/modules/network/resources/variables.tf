@@ -17,6 +17,11 @@ variable "has_database" {
   description = "does the network need a database"
 }
 
+variable "has_blob_storage" {
+  type        = bool
+  description = "does the network need blob storage"
+}
+
 variable "resource_group_name" {
   type = string
 }
