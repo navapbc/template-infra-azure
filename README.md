@@ -11,11 +11,8 @@
   <a href="https://github.com/navapbc/template-infra-azure/blob/main/CONTRIBUTING.md">
     <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen" alt="PRs welcome!" />
   </a>
-  <a href="https://github.com/navapbc/template-infra-azure/issues">
+  <a href="https://github.com/navapbc/template-infra-azure/commits/main">
     <img src="https://img.shields.io/github/commit-activity/m/navapbc/template-infra-azure" alt="git commit activity" />
-  </a>
-  <a href="https://github.com/navapbc/template-infra-azure/repos/">
-    <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/navapbc/template-infra-azure/total">
   </a>
 </h4>
 

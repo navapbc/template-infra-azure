@@ -1,34 +1,43 @@
 {
-  "name": "strata-infra-azure",
-  "version": "1.0.0",
-  "description": "Open source tools for every layer of government service delivery. Strata is a gold-standard target architecture and suite of open source tools that gives government agencies everything they need to run a modern service.",
+  "name": "template-infra-azure",
+  "version": "0.1.0",
+  "description": "A template to set up foundational infrastructure for your application in Azure ",
   "status": "Production",
   "permissions": {
     "licenses": [
       {
         "name": "Apache-2.0",
-        "URL": "https://github.com/navapbc/template-infra-azure/blob/main/LICENSE.md"
+        "URL": "https://github.com/navapbc/template-infra-azure/blob/main/LICENSE"
       }
     ],
-    "usageType": ["openSource"]
+    "usageType": [
+      "openSource"
+    ]
   },
   "organization": "Nava",
   "repositoryURL": "https://github.com/navapbc/template-infra-azure",
   "repositoryVisibility": "public",
   "vcs": "git",
   "reuseFrequency": {
-    "forks": 2
+    "forks": 1
   },
-  "languages": ["Terraform", "Shell"],
+  "languages": [
+    "HCL"
+  ],
   "maintenance": "internal",
   "SBOM": "https://github.com/navapbc/template-infra-azure/network/dependencies",
   "date": {
-    "created": "2022-09-08T23:06:37Z",
-    "lastModified": "2025-10-16T18:20:45Z",
-    "metadataLastUpdated": "2025-10-16T19:37:20.815Z"
+    "created": "2025-07-07T20:26:06Z",
+    "lastModified": "2026-04-15T19:12:53Z",
+    "metadataLastUpdated": "2026-04-17T17:06:19Z"
   },
-  "tags": ["platform", "sdk"],
-  "contact": {},
+  "tags": [
+    "platform",
+    "sdk"
+  ],
+  "contact": {
+    "email": "strata@navapbc.com"
+  },
   "feedbackMechanism": "https://github.com/navapbc/template-infra-azure/issues",
   "AIUseCaseID": "0"
 }
