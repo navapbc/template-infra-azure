@@ -8,6 +8,9 @@ terraform {
 }
 
 locals {
+  # CAF naming: <prefix>-<env>-<role>-<sha1(service_name)[0:7]>
+  _svc_hash = substr(sha1(var.service_name), 0, 7)
+
   secrets = { for item in var.secrets : item.name => item }
 
   base_environment_variables = [
@@ -41,12 +44,12 @@ data "azurerm_container_app_environment" "env" {
 # time. There can be a delay before the permissions are propagated.
 resource "azurerm_user_assigned_identity" "app" {
   location            = var.resource_group_location
-  name                = "${var.service_name}-app"
+  name                = "id-app-${var.environment}-${local._svc_hash}"
   resource_group_name = var.resource_group_name
 }
 
 resource "azurerm_container_app" "service" {
-  name                         = var.service_name
+  name                         = "ca-svc-${var.environment}-${local._svc_hash}"
   container_app_environment_id = data.azurerm_container_app_environment.env.id
   resource_group_name          = var.resource_group_name
   revision_mode                = "Single"
@@ -136,12 +139,12 @@ resource "azurerm_container_app" "service" {
 
 resource "azurerm_user_assigned_identity" "migrator" {
   location            = var.resource_group_location
-  name                = "${var.service_name}-migrator"
+  name                = "id-migrator-${var.environment}-${local._svc_hash}"
   resource_group_name = var.resource_group_name
 }
 
 resource "azurerm_container_app_job" "service_job" {
-  name                         = "${var.service_name}-job"
+  name                         = "caj-svc-${var.environment}-${local._svc_hash}"
   container_app_environment_id = data.azurerm_container_app_environment.env.id
   resource_group_name          = var.resource_group_name
   location                     = var.resource_group_location
