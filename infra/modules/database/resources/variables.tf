@@ -76,3 +76,8 @@ variable "server_parameters" {
 variable "resource_owners" {
   type = list(string)
 }
+
+variable "environment" {
+  type        = string
+  description = "Environment name (e.g. dev, prod)."
+}

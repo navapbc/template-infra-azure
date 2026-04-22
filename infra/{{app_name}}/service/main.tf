@@ -94,6 +94,7 @@ module "service" {
   }
 
   service_name            = local.service_name
+  environment             = var.environment_name
   resource_group_name     = local.is_temporary ? local.resource_group_name : azurerm_resource_group.service[0].name
   resource_group_location = local.location
   image_registry_id       = module.app_config.build_repository_config.registry_id

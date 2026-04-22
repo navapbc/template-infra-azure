@@ -1,5 +1,9 @@
 locals {
-  role_manager_name = "${var.resource_group_name}-role-manager"
+  # CAF naming: <prefix>-<role>-<env>-<sha1(var.name)[0:7]> — deterministic ≤24 chars
+  _rm_hash = substr(sha1(var.name), 0, 7)
+
+  role_manager_uai_name = "id-rm-${var.environment}-${local._rm_hash}"
+  role_manager_job_name = "caj-rm-${var.environment}-${local._rm_hash}"
 }
 
 data "azurerm_container_app_environment" "env" {
@@ -8,7 +12,7 @@ data "azurerm_container_app_environment" "env" {
 }
 
 resource "azurerm_user_assigned_identity" "db_role_manager" {
-  name                = "${local.role_manager_name}-uai"
+  name                = local.role_manager_uai_name
   location            = var.location
   resource_group_name = var.resource_group_name
 }
@@ -38,7 +42,7 @@ resource "azuread_group_member" "db_role_manager_migrator" {
 }
 
 resource "azurerm_container_app_job" "db_role_manager" {
-  name                         = "${local.role_manager_name}-job"
+  name                         = local.role_manager_job_name
   location                     = var.location
   resource_group_name          = var.resource_group_name
   container_app_environment_id = data.azurerm_container_app_environment.env.id
