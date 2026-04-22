@@ -84,6 +84,7 @@ module "database" {
   source = "../../modules/database/resources"
 
   name                = local.name
+  environment         = var.environment_name
   resource_group_name = azurerm_resource_group.db.name
   resource_owners     = local.infra_admin_config.object_ids
 
