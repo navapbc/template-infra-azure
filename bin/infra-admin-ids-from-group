@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#
+# Generate list of user IDs in given Entra Group, that can then be easily
+# copy-pasted into `infra_admins` blocks in `infra/project-config/main.tf`.
+
+set -euo pipefail
+
+group_id_or_display_name=$1
+
+readarray -t group_members < <(az ad group member list --group "${group_id_or_display_name}" | jq -c ".[]")
+
+for member in "${group_members[@]}"; do
+  object_id=$(echo "${member}" | jq -r ".id")
+  principal_name=$(echo "${member}" | jq -r ".userPrincipalName")
+
+  echo "        \"${object_id}\",             # ${principal_name}"
+done
