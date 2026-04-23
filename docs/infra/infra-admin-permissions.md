@@ -10,6 +10,7 @@ application:
 - Owner
 - Key Vault Administrator
 - Role Based Access Control Administrator
+- Storage Blob Data Contributor
 
 Scoped to the Microsoft Entra ID tenant itself:
 - Cloud Application Administrator, to register the GitHub Actions identity. This
