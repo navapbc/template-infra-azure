@@ -26,5 +26,9 @@ locals {
       manage_method = "generated"
       secret_name   = "random-secret"
     },
+    SECRET_KEY_BASE = {
+      manage_method = "generated"
+      secret_name   = "secret-key-base"
+    }
   }
 }
