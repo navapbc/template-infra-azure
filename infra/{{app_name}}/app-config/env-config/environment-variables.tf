@@ -25,6 +25,6 @@ locals {
     RANDOM_SECRET = {
       manage_method = "generated"
       secret_name   = "random-secret"
-    },
+    }
   }
 }
