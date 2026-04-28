@@ -7,6 +7,9 @@ locals {
     # WORKER_THREADS_COUNT    = 4
     # LOG_LEVEL               = "info"
     # DB_CONNECTION_POOL_SIZE = 5
+
+    # Informs the application to use Azure Entra authentication for the database
+    DB_AUTH_METHOD = "azure_entra"
   }
 
   # Configuration for secrets
