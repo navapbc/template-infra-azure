@@ -7,7 +7,6 @@ locals {
     # WORKER_THREADS_COUNT    = 4
     # LOG_LEVEL               = "info"
     # DB_CONNECTION_POOL_SIZE = 5
-    DB_AUTH_METHOD = "azure_entra"
   }
 
   # Configuration for secrets
@@ -26,10 +25,6 @@ locals {
     RANDOM_SECRET = {
       manage_method = "generated"
       secret_name   = "random-secret"
-    },
-    SECRET_KEY_BASE = {
-      manage_method = "generated"
-      secret_name   = "secret-key-base"
     }
   }
 }
