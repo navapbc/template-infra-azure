@@ -14,6 +14,14 @@ locals {
     { name : "PORT", value : tostring(var.container_port) },
     { name : "IMAGE_TAG", value : var.image_tag },
     { name : "AZURE_CLIENT_ID", value : azurerm_user_assigned_identity.app.client_id },
+
+    # Resource Identifier URI (audience) used when requesting an access token from
+    # MS Entra ID for authenticating to PostgreSQL using Azure AD Auth.
+    # Different Azure DB services have different resource URIs, consult documentation
+    # for the specific service being used. For Azure Database for PostgreSQL,
+    # the resource URI is "https://ossrdbms-aad.database.windows.net"
+    { name : "AZURE_DB_RESOURCE_URI", value : "https://ossrdbms-aad.database.windows.net" },
+    { name : "DB_AUTH_METHOD", value : "azure_entra" },
   ]
   db_environment_variables = var.db_vars == null ? [] : [
     { name : "DB_HOST", value : var.db_vars.connection_info.host },
