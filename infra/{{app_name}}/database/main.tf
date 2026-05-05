@@ -12,6 +12,11 @@ locals {
   name                = "${local.prefix}${local.database_config.cluster_name}"
   resource_group_name = "${local.prefix}${local.database_config.resource_group_name}"
 
+  # 8-char hex suffix unique per app+environment+location combination.
+  # Input: cluster name (contains app+env+prefix), location, and project-level unique id.
+  # Used for CAF-compliant resource names that must be globally unique.
+  resource_unique_suffix = substr(md5("${local.name}-${local.location}-${module.project_config.project_unique_id}"), 0, 8)
+
   infra_admin_config = module.project_config.infra_admins[local.environment_config.account_name]
 
   network_config = module.project_config.network_configs[local.environment_config.network_name]
@@ -83,9 +88,10 @@ resource "azurerm_resource_group" "db" {
 module "database" {
   source = "../../modules/database/resources"
 
-  name                = local.name
-  resource_group_name = azurerm_resource_group.db.name
-  resource_owners     = local.infra_admin_config.object_ids
+  name                   = local.name
+  resource_group_name    = azurerm_resource_group.db.name
+  resource_owners        = local.infra_admin_config.object_ids
+  resource_unique_suffix = local.resource_unique_suffix
 
   role_manager_image_registry_id    = module.app_config.build_repository_config.registry_id
   role_manager_image_registry_url   = module.app_config.build_repository_config.registry_url

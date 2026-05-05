@@ -1,6 +1,8 @@
 locals {
-  role_manager_name     = "${var.resource_group_name}-role-manager"
-  role_manager_job_name = "${var.resource_group_name}-rm-job"
+  # CAF naming: <prefix>-<role>-<suffix> trimmed to ≤24 chars, no trailing dash
+  # suffix is unique per app+environment+location, derived by the caller
+  role_manager_uai_name = "id-rm-${var.resource_unique_suffix}"
+  role_manager_job_name = "caj-rm-${var.resource_unique_suffix}"
 }
 
 data "azurerm_container_app_environment" "env" {
@@ -9,7 +11,7 @@ data "azurerm_container_app_environment" "env" {
 }
 
 resource "azurerm_user_assigned_identity" "db_role_manager" {
-  name                = "${local.role_manager_name}-uai"
+  name                = local.role_manager_uai_name
   location            = var.location
   resource_group_name = var.resource_group_name
 }

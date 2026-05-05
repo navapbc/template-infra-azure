@@ -76,3 +76,12 @@ variable "server_parameters" {
 variable "resource_owners" {
   type = list(string)
 }
+
+variable "resource_unique_suffix" {
+  type        = string
+  description = "8-char hex suffix unique per app+environment+location."
+  validation {
+    condition     = can(regex("^[0-9a-f]{8}$", var.resource_unique_suffix))
+    error_message = "resource_unique_suffix must be exactly 8 lowercase hex characters."
+  }
+}
