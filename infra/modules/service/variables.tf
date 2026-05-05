@@ -168,8 +168,3 @@ variable "application_gateway_sku_name" {
     error_message = "Valid values Application Gateway SKU: Basic, Standard_v2, WAF_v2"
   }
 }
-
-variable "environment" {
-  type        = string
-  description = "Environment name (e.g. dev, prod)."
-}
