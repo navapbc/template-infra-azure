@@ -223,11 +223,6 @@ resource "azurerm_application_gateway" "service" {
         header_name  = "X-Forwarded-Host"
         header_value = "{var_host}"
       }
-
-      request_header_configuration {
-        header_name  = "X-Forwarded-Proto"
-        header_value = "https"
-      }
     }
   }
 
