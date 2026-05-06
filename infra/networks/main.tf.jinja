@@ -124,6 +124,8 @@ module "network" {
 
   container_registry_id   = local.container_registry_config.registry_id
   container_registry_name = local.container_registry_config.registry_name
+
+  depends_on = [azurerm_resource_group.network]
 }
 
 module "certificate_store" {
