@@ -1,7 +1,5 @@
 locals {
-  # Azure storage account names must be globally unique, 3-24 characters,
-  # lowercase letters and numbers only.
-  storage_account_name = substr(replace("${local.service_name}stor", "-", ""), 0, 24)
+  storage_config = local.environment_config.storage_config
 }
 
 data "azurerm_log_analytics_workspace" "logs" {
@@ -15,10 +13,11 @@ module "storage" {
   count  = module.app_config.has_blob_storage ? 1 : 0
   source = "../../modules/storage"
 
-  storage_account_name    = local.storage_account_name
+  name                    = local.storage_config.account_name
   resource_group_name     = local.is_temporary ? local.resource_group_name : azurerm_resource_group.service[0].name
   resource_group_location = local.location
-  container_name          = "documents"
+  container_name          = local.storage_config.container_name
+  is_temporary            = local.is_temporary
 
   monitor_config = {
     enabled                    = !local.is_temporary
