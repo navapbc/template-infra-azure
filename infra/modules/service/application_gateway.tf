@@ -20,6 +20,7 @@ locals {
   http_to_https_redirect_configuration_name = "${local.gateway_resource_prefix}-rdrcfg"
   ssl_cert_name                             = "${local.gateway_resource_prefix}-ssl-cert"
   backend_probe_name                        = "${local.gateway_resource_prefix}-be-probe"
+  rewrite_rule_set_name                     = "${local.gateway_resource_prefix}-rewrite-rules"
 
   # TODO if using IP Address to the environment? Would not be needed if the backend_address_pool.fqdns is set
   backend_host_name = azurerm_container_app.service.ingress[0].fqdn
@@ -142,6 +143,8 @@ resource "azurerm_application_gateway" "service" {
     port                  = 443
     protocol              = "Https"
     # request_timeout       = 60
+
+    pick_host_name_from_backend_address = false
     # TODO if using IP Address to the environment? Would not be needed if the backend_address_pool.fqdns is set
     host_name  = local.backend_host_name
     probe_name = local.backend_probe_name
@@ -209,6 +212,20 @@ resource "azurerm_application_gateway" "service" {
     redirect_configuration_name = local.http_to_https_redirect_configuration_name
   }
 
+  rewrite_rule_set {
+    name = local.rewrite_rule_set_name
+
+    rewrite_rule {
+      name          = "forward-original-host"
+      rule_sequence = 100
+
+      request_header_configuration {
+        header_name  = "X-Forwarded-Host"
+        header_value = "{var_host}"
+      }
+    }
+  }
+
   request_routing_rule {
     name                       = local.https_request_routing_rule_name
     priority                   = 1
@@ -216,6 +233,7 @@ resource "azurerm_application_gateway" "service" {
     http_listener_name         = local.https_listener_name
     backend_address_pool_name  = local.backend_address_pool_name
     backend_http_settings_name = local.http_setting_name
+    rewrite_rule_set_name      = local.rewrite_rule_set_name
   }
 
   depends_on = [azurerm_public_ip.pip_v4[0]]
