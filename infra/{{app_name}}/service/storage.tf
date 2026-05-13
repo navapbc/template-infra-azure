@@ -23,6 +23,15 @@ module "storage" {
     enabled                    = !local.is_temporary
     log_analytics_workspace_id = !local.is_temporary ? data.azurerm_log_analytics_workspace.logs[0].id : ""
   }
+
+  # Grant storage access to service identities
+  # This replaces the role assignment previously done in modules/service/storage_access.tf
+  principals_with_access = [
+    {
+      principal_id = module.service.service_user_identity_id
+      description  = "App service managed identity"
+    }
+  ]
 }
 
 module "storage_endpoint" {
