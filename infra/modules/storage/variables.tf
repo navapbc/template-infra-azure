@@ -21,7 +21,7 @@ variable "resource_group_location" {
 
 variable "container_name" {
   type        = string
-  description = "Name of the blob container created inside the storage account. Azure-specific: AWS S3 has no equivalent — buckets are flat namespaces."
+  description = "Name of the blob container created inside the storage account."
   default     = "documents"
 }
 
