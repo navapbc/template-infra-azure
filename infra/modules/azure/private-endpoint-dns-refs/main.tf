@@ -78,5 +78,5 @@ output "zones_by_resource_type" {
 }
 
 output "zones_by_provider" {
-  value = local.zones_by_resource_type
+  value = local.zones_by_provider
 }
