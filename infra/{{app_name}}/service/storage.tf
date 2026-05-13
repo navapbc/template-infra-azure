@@ -5,7 +5,7 @@ locals {
 data "azurerm_log_analytics_workspace" "logs" {
   count = module.app_config.has_blob_storage && !local.is_temporary ? 1 : 0
 
-  name                = "logs"
+  name                = "subscription-logs"
   resource_group_name = module.network.resource_group_name
 }
 
