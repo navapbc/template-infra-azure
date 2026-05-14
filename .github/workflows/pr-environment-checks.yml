@@ -37,9 +37,6 @@ jobs:
       pull-requests: write # Needed to comment on PR
       repository-projects: read # Workaround for GitHub CLI bug https://github.com/cli/cli/issues/6274
 
-    outputs:
-      service_endpoint: ${{ steps.update-environment.outputs.service_endpoint }}
-
     steps:
       - uses: actions/checkout@v4
 
@@ -53,11 +50,6 @@ jobs:
           environment: ${{ inputs.environment }}
 
       - name: Update environment
-        id: update-environment
-        run: |
-          ./bin/update-pr-environment "${{ inputs.app_name }}" "${{ inputs.environment }}" "${{ inputs.pr_number }}" "${{ inputs.commit_hash }}"
-          service_endpoint=$(terraform -chdir="infra/${{ inputs.app_name }}/service" output -raw service_endpoint)
-          echo "service_endpoint=${service_endpoint}"
-          echo "service_endpoint=${service_endpoint}" >> "$GITHUB_OUTPUT"
+        run: ./bin/update-pr-environment "${{ inputs.app_name }}" "${{ inputs.environment }}" "${{ inputs.pr_number }}" "${{ inputs.commit_hash }}"
         env:
           GH_TOKEN: ${{ github.token }}

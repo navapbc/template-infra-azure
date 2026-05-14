@@ -56,6 +56,8 @@ Using these reusable workflows, configure PR environments for each application w
 - `ci-<APP_NAME>-pr-environment-destroy.yml`
   - Based on [ci-{{app_name}}-pr-environment-destroy.yml](/.github/workflows/ci-{{app_name}}-pr-environment-destroy.yml.jinja)
 
+Note that the destroy wrapper triggers on `pull_request_target: [closed]` rather than `pull_request: [closed]`. `pull_request_target` runs the workflow file from the base branch (with access to repo secrets, including Azure credentials), even when a pull request originates from a fork. `pull_request` from a fork does not get secrets, so the destroy step would not be able to authenticate to Azure. Because the workflow file used is the base branch's, a PR author cannot inject malicious code into the destroy step.
+
 ## Orphaned environment cleanup
 
 A scheduled workflow ([scan-orphaned-environments.yml](/.github/workflows/scan-orphaned-environments.yml)) runs daily and checks for two kinds of leftover environments:

@@ -10,7 +10,7 @@ source bin/util.sh
 GITHUB_STEP_SUMMARY=${GITHUB_STEP_SUMMARY:-/dev/null}
 
 # 24 hours in seconds
-MAX_ENVIRONMENT_AGE_MILLIS=86400
+MAX_ENVIRONMENT_AGE_SECONDS=86400
 
 app_name="$1"
 
@@ -37,9 +37,9 @@ for test_id in $test_ids; do
   current_timestamp="$(date +%s)"
   age="$((current_timestamp - test_timestamp))"
 
-  if [ "${age}" -gt "${MAX_ENVIRONMENT_AGE_MILLIS}" ]; then
-    echo "stale ID:   ${test_id}   age: $((age / 3600)) hours   started: $(date -r "${test_timestamp}")"
-    echo "stale ID:   ${test_id}   age: $((age / 3600)) hours   started: $(date -r "${test_timestamp}")" >> "${GITHUB_STEP_SUMMARY}"
+  if [ "${age}" -gt "${MAX_ENVIRONMENT_AGE_SECONDS}" ]; then
+    echo "stale ID:   ${test_id}   age: $((age / 3600)) hours   started: $(date -d "@${test_timestamp}")"
+    echo "stale ID:   ${test_id}   age: $((age / 3600)) hours   started: $(date -d "@${test_timestamp}")" >> "${GITHUB_STEP_SUMMARY}"
     stale_tests+=("${test_id}")
   fi
 

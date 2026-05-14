@@ -34,16 +34,17 @@ service_endpoint="$(terraform -chdir="infra/${app_name}/service" output -raw ser
 
 echo "::group::Wait for ${service_endpoint} to become healthy"
 # Azure Container Apps has no clean CLI equivalent of `aws ecs wait
-# services-stable`. Poll the service's /health endpoint until it returns 200
-# (or give up after ~5 minutes). This matches what infra/test/infra_test.go
-# does for Terratest.
+# services-stable`. Poll the service's /health endpoint until it returns 2xx.
+# This matches what infra/test/infra_test.go does for Terratest.
 attempt=0
 max_attempts=60
 sleep_seconds=5
-until curl --silent --show-error --fail --max-time 10 "${service_endpoint}/health" > /dev/null; do
+curl_max_time=10
+until curl --silent --show-error --fail --location --max-time "${curl_max_time}" "${service_endpoint}/health" > /dev/null; do
   attempt=$((attempt + 1))
   if [ "${attempt}" -ge "${max_attempts}" ]; then
-    echo "Service did not become healthy within $((max_attempts * sleep_seconds)) seconds"
+    max_wait=$((max_attempts * (curl_max_time + sleep_seconds)))
+    echo "Service did not become healthy after ${max_attempts} attempts (~${max_wait}s worst case)"
     exit 1
   fi
   echo "Attempt ${attempt}/${max_attempts}: service not healthy yet, retrying in ${sleep_seconds}s..."
