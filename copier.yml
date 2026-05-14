@@ -95,6 +95,7 @@ _skip_if_exists:
 _exclude:
   - /.git
   - /.github/CODEOWNERS
+  - /.github/ISSUE_TEMPLATE
   - /copier.yml
   - /code.json
   - /CODE_OF_CONDUCT.md
