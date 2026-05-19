@@ -1,6 +1,6 @@
 locals {
   # this must be globally unique
-  vault_name                = substr("${local.service_config.service_name}-${local.location}-${module.project_config.project_unique_id}", 0, 24)
+  vault_name                = trimsuffix(substr("${local.service_config.service_name}-${local.location}-${module.project_config.project_unique_id}", 0, 24), "-")
   vault_resource_group_name = "${local.service_config.service_name}-secrets"
 
   key_vault_id = local.is_temporary ? data.azurerm_key_vault.vault[0].id : module.secret_store[0].key_vault_id
