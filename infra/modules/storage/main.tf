@@ -13,9 +13,7 @@ resource "azurerm_storage_account" "storage" {
   local_user_enabled              = false
 
   allow_nested_items_to_be_public = false
-  # public_network_access_enabled = false
-  # checkov:skip=CKV_AZURE_59:TODO disable public access
-  # checkov:skip=CKV2_AZURE_33:TODO disable public access
+  public_network_access_enabled   = false
 
   identity {
     type = "SystemAssigned"
