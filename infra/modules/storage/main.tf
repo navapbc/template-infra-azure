@@ -19,6 +19,8 @@ resource "azurerm_storage_account" "storage" {
     type = "SystemAssigned"
   }
 
+  # checkov:skip=CKV2_AZURE_33:Private endpoint is configured by the calling module (e.g., infra/{{app_name}}/service/storage.tf)
+
   blob_properties {
     versioning_enabled            = !var.is_temporary
     change_feed_enabled           = !var.is_temporary
