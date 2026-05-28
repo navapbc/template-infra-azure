@@ -18,6 +18,10 @@ output "service_config" {
   value = local.service_config
 }
 
+output "storage_config" {
+  value = local.storage_config
+}
+
 output "use_application_gateway" {
   value = try(local.network_config.network.application_gateway_subnet_name != null, false)
 }

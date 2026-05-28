@@ -66,6 +66,16 @@ variable "db_vars" {
   default = null
 }
 
+variable "storage_vars" {
+  description = "Variables for integrating the app service with blob storage"
+  type = object({
+    storage_account_id   = string
+    storage_account_name = string
+    container_name       = string
+  })
+  default = null
+}
+
 variable "extra_environment_variables" {
   type        = map(string)
   description = "Additional environment variables to pass to the service container. Map from environment variable name to the value."

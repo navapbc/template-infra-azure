@@ -28,7 +28,8 @@ locals {
     ])
   ]
 
-  has_database = anytrue([for app in local.apps_in_network : app.has_database])
+  has_database     = anytrue([for app in local.apps_in_network : app.has_database])
+  has_blob_storage = anytrue([for app in local.apps_in_network : app.has_blob_storage])
 
   # Whether any of the applications in the network have an Application Gateway
   env_configs = flatten(
@@ -116,6 +117,7 @@ module "network" {
   network_name        = var.network_name
   network_config      = local.network_config
   has_database        = local.has_database
+  has_blob_storage    = local.has_blob_storage
   resource_group_name = azurerm_resource_group.network.name
 
   log_analytics_workspace_resource_id  = azurerm_log_analytics_workspace.logs.id

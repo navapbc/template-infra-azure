@@ -15,6 +15,11 @@ variable "has_database" {
   type = bool
 }
 
+variable "has_blob_storage" {
+  type    = bool
+  default = false
+}
+
 variable "service_cpu" {
   type    = number
   default = 0.25
