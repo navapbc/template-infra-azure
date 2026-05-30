@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+account_id=${1:-$(./bin/current-account-id)}
+
+# Be sure the project-config outputs exist
+terraform -chdir="infra/project-config" apply -auto-approve > /dev/null
+
+project_resource_providers=$(terraform -chdir=infra/project-config output -json azure_resource_providers | jq -r '.[]' | sort)
+
+account_registered_resource_providers=$(az provider list --subscription "${account_id}" --query "[?registrationState=='Registered'].namespace" --output tsv | sort)
+
+missing_project_providers=$(comm -23 <(echo "${project_resource_providers}") <(echo "${account_registered_resource_providers}"))
+
+if [[ -z "${missing_project_providers}" ]]; then
+  echo "All project providers are registered."
+else
+  echo -e "Missing project providers:\n${missing_project_providers}"
+fi

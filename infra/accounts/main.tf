@@ -52,19 +52,27 @@ data "external" "account_ids_by_name" {
 }
 
 provider "azurerm" {
-  features {}
+  subscription_id = local.subscription_id
+
+  resource_provider_registrations = "none"
+  resource_providers_to_register  = module.project_config.azure_resource_providers_autoenable ? module.project_config.azure_resource_providers : []
+
   storage_use_azuread = true
 
-  subscription_id = local.subscription_id
+  features {}
 }
 
 provider "azurerm" {
-  alias = "shared"
+  alias           = "shared"
+  subscription_id = local.shared_subscription_id
 
-  features {}
+  resource_provider_registrations = "none"
+  # TODO: should we do this?
+  # resource_providers_to_register  = module.project_config.azure_resource_providers_autoenable ? module.project_config.azure_resource_providers : []
+
   storage_use_azuread = true
 
-  subscription_id = local.shared_subscription_id
+  features {}
 }
 
 module "project_config" {
