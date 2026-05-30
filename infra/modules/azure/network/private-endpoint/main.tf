@@ -23,20 +23,27 @@ locals {
 
   resource_name       = var.resource_name != null ? var.resource_name : local.parsed_resource_info["resource_name"]
   resource_group_name = var.resource_group_name != null ? var.resource_group_name : local.parsed_resource_info["resource_group_name"]
-  resource_location   = !var.enable ? null : var.resource_location != null ? var.resource_location : data.azurerm_resource_group.subnet_rg[0].location
+  resource_location   = var.resource_location != null ? var.resource_location : try(data.azurerm_resource_group.rg[0].location, null)
+
+  parsed_subnet_info        = var.enable ? provider::azurerm::parse_resource_id(var.subnet_id) : null
+  private_endpoint_location = var.enable ? data.azurerm_resource_group.subnet_rg[0].location : null
+  parsed_subnet_rg_name     = var.enable ? local.parsed_subnet_info["resource_group_name"] : null
 
   dns_zone_name = var.dns_zone_key != null ? module.endpoint_refs.zones[var.dns_zone_key] : module.endpoint_refs.zones_by_resource_type[local.resource_type]
-
-  parsed_subnet_info    = var.enable ? provider::azurerm::parse_resource_id(var.subnet_id) : null
-  parsed_subnet_rg_name = var.enable ? local.parsed_subnet_info["resource_group_name"] : null
 }
 
 module "endpoint_refs" {
   source = "../../private-endpoint-dns-refs"
 }
 
+data "azurerm_resource_group" "rg" {
+  count = var.resource_location == null ? 1 : 0
+
+  name = local.parsed_resource_info["resource_group_name"]
+}
+
 data "azurerm_resource_group" "subnet_rg" {
-  count = var.enable && var.resource_location == null ? 1 : 0
+  count = var.enable ? 1 : 0
 
   name = local.parsed_subnet_rg_name
 }
@@ -52,7 +59,7 @@ resource "azurerm_private_endpoint" "service" {
   count = var.enable ? 1 : 0
 
   name                = local.resource_name
-  location            = local.resource_location
+  location            = local.private_endpoint_location
   resource_group_name = local.resource_group_name
   subnet_id           = var.subnet_id
 
