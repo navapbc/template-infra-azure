@@ -1,9 +1,6 @@
 locals {
   role_manager_name = "${var.resource_group_name}-role-manager"
 
-  # User Assigned Identity names have a 24 character limit, so we need to trim the name to fit the suffix
-  role_manager_uai_name = "${trimsuffix(substr(local.role_manager_name, 0, 20), "-")}-uai"
-
   # Container App Job names have a 32 character limit, so we need to trim the name to fit the suffix
   role_manager_job_name = "${trimsuffix(substr(local.role_manager_name, 0, 28), "-")}-job"
 }
@@ -14,7 +11,7 @@ data "azurerm_container_app_environment" "env" {
 }
 
 resource "azurerm_user_assigned_identity" "db_role_manager" {
-  name                = local.role_manager_uai_name
+  name                = "${local.role_manager_name}-uai"
   location            = var.location
   resource_group_name = var.resource_group_name
 }
