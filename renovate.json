@@ -1,6 +1,36 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "github>navapbc/strata-lib-renovate:strataTemplate",
+    "github>navapbc/strata-lib-renovate:strataTemplateSeparateTemplateOnlyLegacy",
+    "github>navapbc/strata-lib-renovate:playwright",
+
+    ":dependencyDashboardApproval"
+  ],
+  "ignorePresets": [":ignoreModulesAndTests"],
+  "gomod": {
+    "managerFilePatterns": ["**/go.mod"]
+  },
+  "postUpdateOptions": [
+    "gomodTidy"
+  ],
+  "github-actions": {
+    "managerFilePatterns": [
+      "/\\.github/(?:workflows|actions)/.+\\.ya?ml(?:.jinja)?$/"
+    ]
+  },
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "aquasecurity/tfsec-pr-commenter-action"
+      ],
+      "enabled": false
+    },
+    {
+      "matchManagers": ["terraform", "terraform-version"],
+      "matchPackageNames": ["hashicorp/terraform"],
+      "groupName": "Terraform Core",
+      "dependencyDashboardApproval": true
+    }
   ]
 }
