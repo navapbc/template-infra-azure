@@ -103,3 +103,4 @@ _exclude:
   - /LICENSE
   - /README.md
   - /SECURITY.md
+  - /renovate.json
