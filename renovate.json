@@ -5,7 +5,8 @@
     "github>navapbc/strata-lib-renovate:strataTemplateSeparateTemplateOnlyLegacy",
     "github>navapbc/strata-lib-renovate:playwright",
 
-    ":dependencyDashboardApproval"
+    ":dependencyDashboardApproval",
+    ":semanticCommitsDisabled"
   ],
   "ignorePresets": [":ignoreModulesAndTests"],
   "gomod": {
