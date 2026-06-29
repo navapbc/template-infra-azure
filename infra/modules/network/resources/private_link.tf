@@ -5,6 +5,7 @@ locals {
     local.use_private_endpoints ? ["acr", "keyvault"] : [],
 
     var.has_database ? ["postgresql"] : [],
+    var.has_blob_storage ? ["blob"] : [],
   )
 }
 

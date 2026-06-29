@@ -51,6 +51,7 @@ locals {
     "vaults"          = "keyvault"
     "registries"      = "acr"
     "flexibleServers" = "postgresql" # not always correct (like if you're using MariaDB)
+    "storageAccounts" = "blob"
   }
 
   zones_by_resource_type = {
@@ -61,6 +62,7 @@ locals {
     "Microsoft.KeyVault"          = "keyvault"
     "Microsoft.ContainerRegistry" = "acr"
     "Microsoft.DBforPostgreSQL"   = "postgresql"
+    "Microsoft.Storage"           = "blob"
   }
 
   zones_by_provider = {
@@ -78,5 +80,5 @@ output "zones_by_resource_type" {
 }
 
 output "zones_by_provider" {
-  value = local.zones_by_resource_type
+  value = local.zones_by_provider
 }

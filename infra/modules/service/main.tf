@@ -22,9 +22,14 @@ locals {
     { name : "DB_NAME", value : var.db_vars.connection_info.db_name },
     { name : "DB_SCHEMA", value : var.db_vars.connection_info.schema_name },
   ]
+  storage_environment_variables = var.storage_vars == null ? [] : [
+    { name : "AZURE_STORAGE_ACCOUNT_NAME", value : var.storage_vars.storage_account_name },
+    { name : "AZURE_STORAGE_CONTAINER_NAME", value : var.storage_vars.container_name },
+  ]
   environment_variables = concat(
     local.base_environment_variables,
     local.db_environment_variables,
+    local.storage_environment_variables,
     [
       for name, value in var.extra_environment_variables :
       { name : name, value : value }
