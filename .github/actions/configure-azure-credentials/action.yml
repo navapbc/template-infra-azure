@@ -81,7 +81,7 @@ runs:
         echo "subscription_id=${account_id}" >> "$GITHUB_OUTPUT"
       shell: bash
 
-    - uses: azure/login@v2
+    - uses: azure/login@v3
       with:
         tenant-id: ${{ env.ARM_TENANT_ID }}
         subscription-id: ${{ steps.get-azure-config.outputs.subscription_id }}
