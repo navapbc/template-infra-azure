@@ -14,6 +14,12 @@ app_name="$1"
 environment="$2"
 pr_number="$3"
 
+# Validate app_name
+if [ ! -d "infra/${app_name}/service" ]; then
+  echo "Error: App '${app_name}' not found in infra/"
+  exit 1
+fi
+
 workspace="p-${pr_number}"
 
 echo "::group::Initialize Terraform with backend for environment: ${environment}"
