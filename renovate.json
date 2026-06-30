@@ -6,7 +6,8 @@
     "github>navapbc/strata-lib-renovate:playwright",
 
     ":dependencyDashboardApproval",
-    ":semanticCommitsDisabled"
+    ":semanticCommitsDisabled",
+    ":rebaseStalePrs"
   ],
   "ignorePresets": [":ignoreModulesAndTests"],
   "gomod": {
