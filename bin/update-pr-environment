@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+# -----------------------------------------------------------------------------
+# Create or update a temporary environment that will exist while a pull request
+# is open.
+#
+# Positional parameters:
+#   app_name (required) – the name of subdirectory of /infra that holds the
+#     application's infrastructure code.
+#   environment - the name of the application environment (e.g. dev, staging, prod)
+#   pr_number - the pull request number in GitHub
+#   image_tag - the commit hash to deploy for the temporary environment
+# -----------------------------------------------------------------------------
+set -euo pipefail
+
+app_name="$1"
+environment="$2"
+pr_number="$3"
+image_tag="$4"
+
+# Validate app_name
+if [ ! -d "infra/${app_name}/service" ]; then
+  echo "Error: App '${app_name}' not found in infra/"
+  exit 1
+fi
+
+workspace="p-${pr_number}"
+
+echo "::group::Initialize Terraform with backend for environment: ${environment}"
+terraform -chdir="infra/${app_name}/service" init -backend-config="${environment}.azurerm.tfbackend"
+echo "::endgroup::"
+
+echo "Select or create Terraform workspace: ${workspace}"
+terraform -chdir="infra/${app_name}/service" workspace select -or-create "${workspace}"
+
+echo "::group::Apply changes to environment using image tag: ${image_tag}"
+# Retry terraform apply to handle transient Azure API errors
+max_tf_attempts=3
+tf_attempt=0
+tf_success=false
+
+while [ $tf_attempt -lt $max_tf_attempts ] && [ "$tf_success" = "false" ]; do
+  tf_attempt=$((tf_attempt + 1))
+
+  if [ $tf_attempt -gt 1 ]; then
+    echo "Retry attempt ${tf_attempt}/${max_tf_attempts} after transient failure..."
+  fi
+
+  if terraform -chdir="infra/${app_name}/service" apply -input=false -auto-approve -var="environment_name=${environment}" -var="image_tag=${image_tag}"; then
+    tf_success=true
+    echo "Terraform apply succeeded"
+  else
+    if [ $tf_attempt -lt $max_tf_attempts ]; then
+      echo "Terraform apply failed, waiting 30s before retry..."
+      sleep 30
+    fi
+  fi
+done
+
+if [ "$tf_success" = "false" ]; then
+  echo "Error: Terraform apply failed after ${max_tf_attempts} attempts"
+  exit 1
+fi
+echo "::endgroup::"
+
+service_endpoint="$(terraform -chdir="infra/${app_name}/service" output -raw service_endpoint)"
+
+echo "::group::Wait for ${service_endpoint} to become healthy"
+# Azure Container Apps has no clean CLI equivalent of `aws ecs wait
+# services-stable`. Poll the service's /health endpoint until it returns 2xx.
+# This matches what infra/test/infra_test.go does for Terratest.
+attempt=0
+max_attempts=20
+sleep_seconds=5
+curl_max_time=10
+# Max wait: 20 attempts × (10s curl timeout + 5s sleep) = 300s = 5 minutes
+until response=$(curl --silent --show-error --fail --location --max-time "${curl_max_time}" "${service_endpoint}/health" 2>&1); do
+  attempt=$((attempt + 1))
+  if [ "${attempt}" -ge "${max_attempts}" ]; then
+    max_wait=$((max_attempts * (curl_max_time + sleep_seconds)))
+    echo "Service did not become healthy after ${max_attempts} attempts (~${max_wait}s worst case)"
+    echo "Last error: ${response}"
+    exit 1
+  fi
+  echo "Attempt ${attempt}/${max_attempts}: service not healthy yet, retrying in ${sleep_seconds}s..."
+  echo "  Error: ${response}"
+  sleep "${sleep_seconds}"
+done
+echo "Service is healthy"
+echo "::endgroup::"
+
+pr_info=$(cat <<EOF
+<!-- ${app_name} - begin PR environment info -->
+## Preview environment for ${app_name}
+- Service endpoint: ${service_endpoint}
+- Deployed commit: ${image_tag}
+<!-- ${app_name} - end PR environment info -->
+EOF
+)
+
+echo "Update PR description with PR environment info"
+echo "${pr_info}"
+
+# Use a retry loop to handle race conditions when multiple workflows update the PR body
+max_attempts=5
+attempt=0
+updated=false
+
+while [ $attempt -lt $max_attempts ] && [ "$updated" = "false" ]; do
+  attempt=$((attempt + 1))
+
+  # Read current PR body
+  pr_body="$(gh pr view "${pr_number}" --json body | jq --raw-output .body)"
+
+  # clean up older single-app section if present
+  if [[ $pr_body == *"<!-- begin PR environment info -->"*"<!-- end PR environment info -->"* ]]; then
+    pr_body="${pr_body//<!-- begin PR environment info -->*<!-- end PR environment info -->}"
+  fi
+
+  # update or add the environment info
+  if [[ $pr_body == *"<!-- ${app_name} - begin PR environment info -->"*"<!-- ${app_name} - end PR environment info -->"* ]]; then
+    pr_body="${pr_body//<!-- ${app_name} - begin PR environment info -->*<!-- ${app_name} - end PR environment info -->/$pr_info}"
+  else
+    pr_body="${pr_body}"$'\n\n'"${pr_info}"
+  fi
+
+  # Try to update the PR body
+  if gh pr edit "${pr_number}" --body "${pr_body}"; then
+    updated=true
+    echo "Successfully updated PR description"
+  else
+    if [ $attempt -lt $max_attempts ]; then
+      echo "Failed to update PR description (attempt ${attempt}/${max_attempts}), retrying in 2s..."
+      sleep 2
+    fi
+  fi
+done
+
+if [ "$updated" = "false" ]; then
+  echo "Warning: Failed to update PR description after ${max_attempts} attempts"
+  exit 1
+fi
