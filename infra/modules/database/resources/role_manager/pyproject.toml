@@ -16,14 +16,11 @@ check = "role_manager.check:check_main"
 
 [dependency-groups]
 dev = [
-    "mypy>=1.15.0",
+    "mypy>=2.1.0",
     "ruff>=0.11.2",
 ]
 
 [tool.mypy]
-# local_partial_types will be enabled by default in mypy 2.0, so start now
-# https://mypy.readthedocs.io/en/stable/changelog.html#mypy-1-12
-local_partial_types = true
 pretty = true
 
 [[tool.mypy.overrides]]
