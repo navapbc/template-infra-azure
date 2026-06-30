@@ -22,15 +22,57 @@ fi
 
 workspace="p-${pr_number}"
 
+# Safety check: never allow deleting the default workspace
+if [ "$workspace" = "default" ] || [ -z "$workspace" ]; then
+  echo "Error: Refusing to delete default or empty workspace"
+  exit 1
+fi
+
 echo "::group::Initialize Terraform with backend for environment: ${environment}"
 terraform -chdir="infra/${app_name}/service" init -backend-config="${environment}.azurerm.tfbackend"
 echo "::endgroup::"
+
+echo "Check if Terraform workspace exists: ${workspace}"
+# List workspaces and check if our workspace exists
+if terraform -chdir="infra/${app_name}/service" workspace list | grep -q "  ${workspace}$"; then
+  echo "Workspace ${workspace} exists, proceeding with destroy"
+else
+  echo "Workspace ${workspace} does not exist - nothing to destroy"
+  echo "This can happen if the workspace was already cleaned up or never created"
+  exit 0
+fi
 
 echo "Select Terraform workspace: ${workspace}"
 terraform -chdir="infra/${app_name}/service" workspace select "${workspace}"
 
 echo "::group::Destroy resources"
-terraform -chdir="infra/${app_name}/service" destroy -var="environment_name=${environment}" -input=false -auto-approve
+# Retry terraform destroy to handle transient Azure API errors
+max_tf_attempts=3
+tf_attempt=0
+tf_success=false
+
+while [ $tf_attempt -lt $max_tf_attempts ] && [ "$tf_success" = "false" ]; do
+  tf_attempt=$((tf_attempt + 1))
+
+  if [ $tf_attempt -gt 1 ]; then
+    echo "Retry attempt ${tf_attempt}/${max_tf_attempts} after transient failure..."
+  fi
+
+  if terraform -chdir="infra/${app_name}/service" destroy -var="environment_name=${environment}" -input=false -auto-approve; then
+    tf_success=true
+    echo "Terraform destroy succeeded"
+  else
+    if [ $tf_attempt -lt $max_tf_attempts ]; then
+      echo "Terraform destroy failed, waiting 30s before retry..."
+      sleep 30
+    fi
+  fi
+done
+
+if [ "$tf_success" = "false" ]; then
+  echo "Error: Terraform destroy failed after ${max_tf_attempts} attempts"
+  exit 1
+fi
 echo "::endgroup::"
 
 echo "Select default workspace"
@@ -47,19 +89,45 @@ pr_info=$(cat <<EOF
 EOF
 )
 
-pr_body="$(gh pr view "${pr_number}" --json body | jq --raw-output .body)"
-
-# clean up older single-app section if present
-if [[ $pr_body == *"<!-- begin PR environment info -->"*"<!-- end PR environment info -->"* ]]; then
-  pr_body="${pr_body//<!-- begin PR environment info -->*<!-- end PR environment info -->}"
-fi
-
-if [[ $pr_body == *"<!-- ${app_name} - begin PR environment info -->"*"<!-- ${app_name} - end PR environment info -->"* ]]; then
-  pr_body="${pr_body//<!-- ${app_name} - begin PR environment info -->*<!-- ${app_name} - end PR environment info -->/$pr_info}"
-else
-  pr_body="${pr_body}"$'\n\n'"${pr_info}"
-fi
-
 echo "Update PR description with PR environment info"
 echo "${pr_info}"
-gh pr edit "${pr_number}" --body "${pr_body}"
+
+# Use a retry loop to handle race conditions when multiple workflows update the PR body
+max_attempts=5
+attempt=0
+updated=false
+
+while [ $attempt -lt $max_attempts ] && [ "$updated" = "false" ]; do
+  attempt=$((attempt + 1))
+
+  # Read current PR body
+  pr_body="$(gh pr view "${pr_number}" --json body | jq --raw-output .body)"
+
+  # clean up older single-app section if present
+  if [[ $pr_body == *"<!-- begin PR environment info -->"*"<!-- end PR environment info -->"* ]]; then
+    pr_body="${pr_body//<!-- begin PR environment info -->*<!-- end PR environment info -->}"
+  fi
+
+  if [[ $pr_body == *"<!-- ${app_name} - begin PR environment info -->"*"<!-- ${app_name} - end PR environment info -->"* ]]; then
+    pr_body="${pr_body//<!-- ${app_name} - begin PR environment info -->*<!-- ${app_name} - end PR environment info -->/$pr_info}"
+  else
+    pr_body="${pr_body}"$'\n\n'"${pr_info}"
+  fi
+
+  # Try to update the PR body
+  if gh pr edit "${pr_number}" --body "${pr_body}"; then
+    updated=true
+    echo "Successfully updated PR description"
+  else
+    if [ $attempt -lt $max_attempts ]; then
+      echo "Failed to update PR description (attempt ${attempt}/${max_attempts}), retrying in 2s..."
+      sleep 2
+    fi
+  fi
+done
+
+if [ "$updated" = "false" ]; then
+  echo "Warning: Failed to update PR description after ${max_attempts} attempts"
+  # Don't fail the workflow just because we couldn't update the PR body
+  echo "Continuing despite PR update failure..."
+fi
