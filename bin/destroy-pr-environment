@@ -34,7 +34,8 @@ echo "::endgroup::"
 
 echo "Check if Terraform workspace exists: ${workspace}"
 # List workspaces and check if our workspace exists
-if terraform -chdir="infra/${app_name}/service" workspace list | grep -q "  ${workspace}$"; then
+# Note: workspace list shows current workspace with "* " prefix, others with "  " prefix
+if terraform -chdir="infra/${app_name}/service" workspace list | grep -qE "^[* ] +${workspace}$"; then
   echo "Workspace ${workspace} exists, proceeding with destroy"
 else
   echo "Workspace ${workspace} does not exist - nothing to destroy"
