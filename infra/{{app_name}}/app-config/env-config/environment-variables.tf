@@ -18,13 +18,16 @@ locals {
   #   }
   # }
   secrets = {
-    SECRET_SAUCE = {
-      manage_method = "manual"
-      secret_name   = "secret-sauce"
-    },
-    RANDOM_SECRET = {
-      manage_method = "generated"
-      secret_name   = "random-secret"
-    },
+    # Example generated secret
+    # RANDOM_SECRET = {
+    #   manage_method = "generated"
+    #   secret_name   = "random-secret"
+    # },
+
+    # Example secret that references a manually created secret
+    # SECRET_SAUCE = {
+    #   manage_method = "manual"
+    #   secret_name   = "secret-sauce"
+    # },
   }
 }
