@@ -44,7 +44,9 @@ data "external" "account_ids_by_name" {
 }
 
 provider "azurerm" {
-  use_oidc = true
+  use_oidc            = true
+  storage_use_azuread = true
+
   features {}
 
   subscription_id = data.external.account_ids_by_name.result[local.environment_config.account_name]
@@ -53,7 +55,9 @@ provider "azurerm" {
 provider "azurerm" {
   alias = "domain"
 
-  use_oidc = true
+  use_oidc            = true
+  storage_use_azuread = true
+
   features {}
 
   # fall back to current subscription so provider can be initialized, but we
