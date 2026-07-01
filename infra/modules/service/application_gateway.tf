@@ -77,8 +77,7 @@ resource "azurerm_application_gateway" "service" {
   location            = var.resource_group_location
   zones               = local.logical_zones
 
-  # TODO: probably make configurable, or just leave out
-  enable_http2 = true
+  http2_enabled = true
 
   sku {
     name     = var.application_gateway_sku_name
