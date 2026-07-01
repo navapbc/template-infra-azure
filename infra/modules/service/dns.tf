@@ -46,7 +46,7 @@ resource "azurerm_dns_cname_record" "service" {
 resource "azurerm_container_app_custom_domain" "service" {
   provider = azurerm.domain
 
-  count = local.should_configure_domain_name && !local.use_application_gateway ? 1 : 0
+  count = var.manage_dns && local.should_configure_domain_name && !local.use_application_gateway ? 1 : 0
 
   name                     = trimsuffix(trimprefix(azurerm_dns_txt_record.service[0].fqdn, "asuid."), ".")
   container_app_id         = azurerm_container_app.service.id
@@ -61,7 +61,7 @@ resource "azurerm_container_app_custom_domain" "service" {
 
 # https://github.com/hashicorp/terraform-provider-azurerm/issues/27362#issuecomment-2407827846
 resource "null_resource" "custom_domain_and_managed_certificate" {
-  count = local.should_configure_domain_name && !local.use_application_gateway ? 1 : 0
+  count = var.manage_dns && local.should_configure_domain_name && !local.use_application_gateway ? 1 : 0
 
   provisioner "local-exec" {
     command = "az containerapp hostname bind --hostname ${local.custom_fqdn} --resource-group ${var.resource_group_name} --name ${azurerm_container_app.service.name} --environment ${data.azurerm_container_app_environment.env.id} --subscription ${data.azurerm_subscription.current.subscription_id} --validation-method CNAME"
