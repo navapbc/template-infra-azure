@@ -101,6 +101,7 @@ if [[ ${storage_account_not_exists} == "true" ]]; then
         --kind StorageV2 \
         --sku Standard_GRS \
         --https-only true \
+        --min-tls-version TLS1_2 \
         --encryption-key-type-for-queue "Account" \
         --encryption-key-type-for-table "Account"
     echo "${green}""Storage account created""${restore}"
