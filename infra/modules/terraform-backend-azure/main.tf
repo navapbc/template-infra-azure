@@ -128,7 +128,6 @@ resource "azurerm_storage_account_customer_managed_key" "tf_state" {
   count = var.use_customer_managed_encryption_key ? 1 : 0
 
   storage_account_id        = azurerm_storage_account.tf_state.id
-  key_vault_id              = azurerm_key_vault.tf_state[0].id
-  key_name                  = azurerm_key_vault_key.tf_state[0].name
+  key_vault_key_id          = azurerm_key_vault_key.tf_state[0].versionless_id
   user_assigned_identity_id = azurerm_user_assigned_identity.tf_state[0].id
 }
