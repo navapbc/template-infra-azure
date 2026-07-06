@@ -24,7 +24,7 @@ resource "azurerm_storage_account" "storage" {
   blob_properties {
     versioning_enabled            = !var.is_temporary
     change_feed_enabled           = !var.is_temporary
-    change_feed_retention_in_days = var.is_temporary ? 1 : 90
+    change_feed_retention_in_days = var.is_temporary ? null : 90
     last_access_time_enabled      = true
 
     delete_retention_policy {
