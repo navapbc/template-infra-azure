@@ -245,7 +245,7 @@ resource "azurerm_application_gateway" "service" {
 resource "azurerm_dns_a_record" "service" {
   provider = azurerm.domain
 
-  count = var.manage_dns && local.custom_fqdn != null && local.use_application_gateway ? 1 : 0
+  count = local.should_configure_app_gateway_custom_domain ? 1 : 0
 
   name                = local.dns_sub == null || local.dns_sub == "" ? "@" : local.dns_sub
   resource_group_name = var.domain_resource_group_name
