@@ -1,6 +1,6 @@
 locals {
   storage_config       = local.environment_config.storage_config
-  storage_account_name = substr("${local.prefix}${local.storage_config.account_name}", 0, 24)
+  storage_account_name = substr("${replace(lower("${local.prefix}"), "/[^a-z0-9]/", "")}${local.storage_config.account_name}", 0, 24)
 }
 
 data "azurerm_log_analytics_workspace" "logs" {
