@@ -66,5 +66,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TF_IN_AUTOMATION: "true"
 
-  # TODO(#50): Add a notify job that posts to Slack on failure. Until then,
+  # TODO(https://github.com/navapbc/template-infra-azure/issues/50): Add a notify job that posts to Slack on failure. Until then,
   # orphaned-environment alerts only show up in the Actions UI.
