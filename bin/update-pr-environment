@@ -100,7 +100,8 @@ EOF
 echo "Update PR description with PR environment info"
 echo "${pr_info}"
 
-# Use a retry loop to handle race conditions when multiple workflows update the PR body
+# Use a retry loop to handle transient GitHub API errors (not race conditions)
+# TODO: For race condition handling, see https://github.com/navapbc/template-infra/issues/982
 max_attempts=5
 attempt=0
 updated=false
