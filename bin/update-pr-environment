@@ -63,29 +63,13 @@ fi
 echo "::endgroup::"
 
 service_endpoint="$(terraform -chdir="infra/${app_name}/service" output -raw service_endpoint)"
+service_resource_group="$(terraform -chdir="infra/${app_name}/service" output -raw service_resource_group)"
+service_name="$(terraform -chdir="infra/${app_name}/service" output -raw service_name)"
 
-echo "::group::Wait for ${service_endpoint} to become healthy"
-# Azure Container Apps has no clean CLI equivalent of `aws ecs wait
-# services-stable`. Poll the service's /health endpoint until it returns 2xx.
-# This matches what infra/test/infra_test.go does for Terratest.
-attempt=0
-max_attempts=20
-sleep_seconds=5
-curl_max_time=10
-# Max wait: 20 attempts × (10s curl timeout + 5s sleep) = 300s = 5 minutes
-until response=$(curl --silent --show-error --fail --location --max-time "${curl_max_time}" "${service_endpoint}/health" 2>&1); do
-  attempt=$((attempt + 1))
-  if [ "${attempt}" -ge "${max_attempts}" ]; then
-    max_wait=$((max_attempts * (curl_max_time + sleep_seconds)))
-    echo "Service did not become healthy after ${max_attempts} attempts (~${max_wait}s worst case)"
-    echo "Last error: ${response}"
-    exit 1
-  fi
-  echo "Attempt ${attempt}/${max_attempts}: service not healthy yet, retrying in ${sleep_seconds}s..."
-  echo "  Error: ${response}"
-  sleep "${sleep_seconds}"
-done
-echo "Service is healthy"
+echo "::group::Wait for ${service_name} to become healthy"
+# The wait logic lives in a separate script so it can be shared with the AWS
+# template — only the "service health" check inside it needs to differ.
+./bin/wait-for-pr-environment-healthy "${service_resource_group}" "${service_name}"
 echo "::endgroup::"
 
 pr_info=$(cat <<EOF

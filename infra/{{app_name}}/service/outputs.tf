@@ -10,6 +10,11 @@ output "service_resource_group" {
   value = local.resource_group_name
 }
 
+output "service_name" {
+  description = "The name of the Container App running the service."
+  value       = local.service_name
+}
+
 output "service_job_name" {
   value = module.service.service_job_name
 }
