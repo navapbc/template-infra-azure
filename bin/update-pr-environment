@@ -84,7 +84,11 @@ EOF
 echo "Update PR description with PR environment info"
 echo "${pr_info}"
 
-# Use a retry loop to handle race conditions when multiple workflows update the PR body
+# Retry to handle transient GitHub API errors when updating the PR body. This
+# does NOT protect against races between concurrent workflows updating the same
+# PR body; that requires a locking/read-modify-write fix tracked in
+# https://github.com/navapbc/template-infra/issues/982
+# TODO(https://github.com/navapbc/template-infra/issues/982): handle concurrent PR body updates
 max_attempts=5
 attempt=0
 updated=false
@@ -94,11 +98,6 @@ while [ $attempt -lt $max_attempts ] && [ "$updated" = "false" ]; do
 
   # Read current PR body
   pr_body="$(gh pr view "${pr_number}" --json body | jq --raw-output .body)"
-
-  # clean up older single-app section if present
-  if [[ $pr_body == *"<!-- begin PR environment info -->"*"<!-- end PR environment info -->"* ]]; then
-    pr_body="${pr_body//<!-- begin PR environment info -->*<!-- end PR environment info -->}"
-  fi
 
   # update or add the environment info
   if [[ $pr_body == *"<!-- ${app_name} - begin PR environment info -->"*"<!-- ${app_name} - end PR environment info -->"* ]]; then
