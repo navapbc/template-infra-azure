@@ -58,11 +58,14 @@ resource "azurerm_container_app" "service" {
   workload_profile_name        = "Consumption"
 
   # Other roles are also required, but that list may be dynamic/would require
-  # more work to track super accurately, so just one one of the roles, which
-  # generally gets things delayed/ordered correctly. If you happen to encounter
-  # deploy errors around roles not existing, should be able to just retry the
-  # deploy.
-  depends_on = [azurerm_role_assignment.app_cr]
+  # more work to track super accurately, so just reference the roles/assignments
+  # that are readily accessible, which generally gets things delayed/ordered
+  # correctly. If you happen to encounter deploy errors around roles not
+  # existing, should be able to just retry the deploy.
+  depends_on = [
+    azurerm_role_assignment.app_cr,
+    azurerm_role_assignment.app_secrets
+  ]
 
   identity {
     type         = "UserAssigned"
@@ -152,7 +155,10 @@ resource "azurerm_container_app_job" "service_job" {
   location                     = var.resource_group_location
   workload_profile_name        = "Consumption"
 
-  depends_on = [azurerm_role_assignment.migrator_cr]
+  depends_on = [
+    azurerm_role_assignment.migrator_cr,
+    azurerm_role_assignment.migrator_secrets
+  ]
 
   identity {
     type         = "UserAssigned"
