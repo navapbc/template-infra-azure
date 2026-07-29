@@ -29,6 +29,9 @@ The Azure account setup process will:
   * You will ultimately want to set an `infra_admins` entry for the given
     account name, but you can do that after initial creation. Note only the
     person who runs the initial create will be able to run the update.
+    * If you have an Entra group for the admins, the
+      `bin/infra-admin-ids-from-group <GROUP_NAME>` script can provide the list
+      of IDs for easy copy-paste into the config.
 
 ## Instructions
 
