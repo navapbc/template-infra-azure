@@ -23,9 +23,8 @@ resource "azurerm_private_dns_zone" "service_zone" {
 resource "azurerm_private_dns_zone_virtual_network_link" "link" {
   for_each = azurerm_private_dns_zone.service_zone
 
-  name                  = "${var.resource_group_name}-dnslink-${each.key}"
-  resource_group_name   = var.resource_group_name
-  private_dns_zone_name = each.value.name
+  name                = "${var.resource_group_name}-dnslink-${each.key}"
+  private_dns_zone_id = each.value.id
 
   virtual_network_id = module.vnet.vnet_id
 
