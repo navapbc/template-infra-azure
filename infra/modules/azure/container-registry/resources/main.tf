@@ -10,7 +10,6 @@ resource "azurerm_container_registry" "registry" {
   data_endpoint_enabled         = true
   quarantine_policy_enabled     = false
   retention_policy_in_days      = 7
-  trust_policy_enabled          = true
   anonymous_pull_enabled        = false
   zone_redundancy_enabled       = true
 
@@ -27,4 +26,5 @@ resource "azurerm_container_registry" "registry" {
   # and if we want to disable public networking (can we still push from github actions)
   # checkov:skip=CKV_AZURE_166:Skip ensure container image quarantine, scan, and mark images verified
   # checkov:skip=CKV_AZURE_139:Skip ensure ACR set to disable public networking
+  # checkov:skip=CKV_AZURE_164:Docker Content Trust is retired
 }
