@@ -40,6 +40,10 @@ data "external" "account_ids_by_name" {
 }
 
 provider "azurerm" {
+  subscription_id = data.external.account_ids_by_name.result[local.environment_config.account_name]
+
+  resource_provider_registrations = "none"
+
   storage_use_azuread = true
   use_oidc            = true
 
@@ -48,8 +52,6 @@ provider "azurerm" {
       restart_server_on_configuration_value_change = false
     }
   }
-
-  subscription_id = data.external.account_ids_by_name.result[local.environment_config.account_name]
 }
 
 module "project_config" {
