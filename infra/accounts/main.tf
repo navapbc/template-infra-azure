@@ -67,8 +67,6 @@ provider "azurerm" {
   subscription_id = local.shared_subscription_id
 
   resource_provider_registrations = "none"
-  # TODO: should we do this?
-  # resource_providers_to_register  = module.project_config.azure_resource_providers_autoenable ? module.project_config.azure_resource_providers : []
 
   storage_use_azuread = true
 

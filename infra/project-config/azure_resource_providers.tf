@@ -5,10 +5,9 @@
 locals {
   azure_resource_providers_autoenable = true
 
-  # TODO: does this comment live here or in some template-only docs?
-  # You can get a loose list of providers from existing resources with something like:
+  # You can get a loose list of providers from existing resources with:
   #
-  #   az resource list | jq -r '.[].type' | sed "s|/.*||" | sort | uniq
+  #   az resource list | jq -r '.[].type' | sed "s|/.*||" | sort -u
   #
   azure_resource_providers = [
     # These are for Azure Resource Manageer itself and registered by default in a Subscription
@@ -25,6 +24,9 @@ locals {
     # Azure Database for PostgreSQL
     "Microsoft.DBforPostgreSQL",
 
+    # Azure Event Grid - for actions based on Storage account events
+    "Microsoft.EventGrid",
+
     # Azure Monitor - data collection rules and endpoints
     "microsoft.insights",
 
@@ -40,7 +42,7 @@ locals {
     # Azure Monitor - workspaces
     "Microsoft.OperationalInsights",
 
-    // Storage accounts - for Terraform state and various data needs
+    # Storage accounts - for Terraform state and various data needs
     "Microsoft.Storage",
   ]
 }
