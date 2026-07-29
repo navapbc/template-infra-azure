@@ -10,10 +10,10 @@ locals {
   #   az resource list | jq -r '.[].type' | sed "s|/.*||" | sort -u
   #
   azure_resource_providers = [
-    # These are for Azure Resource Manageer itself and registered by default in a Subscription
-    # TODO: should we include these? can we (does attempting to register even work)?
-    # "Microsoft.Authorization",
-    # "Microsoft.Resources",
+    # These are for Azure Resource Manager itself and should be registered by
+    # default in a Subscription, but included here for explicit context
+    "Microsoft.Authorization",
+    "Microsoft.Resources",
 
     # Azure Container Apps
     "Microsoft.App",
