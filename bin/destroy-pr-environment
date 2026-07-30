@@ -108,11 +108,6 @@ while [ $attempt -lt $max_attempts ] && [ "$updated" = "false" ]; do
   # Read current PR body
   pr_body="$(gh pr view "${pr_number}" --json body | jq --raw-output .body)"
 
-  # clean up older single-app section if present
-  if [[ $pr_body == *"<!-- begin PR environment info -->"*"<!-- end PR environment info -->"* ]]; then
-    pr_body="${pr_body//<!-- begin PR environment info -->*<!-- end PR environment info -->}"
-  fi
-
   if [[ $pr_body == *"<!-- ${app_name} - begin PR environment info -->"*"<!-- ${app_name} - end PR environment info -->"* ]]; then
     pr_body="${pr_body//<!-- ${app_name} - begin PR environment info -->*<!-- ${app_name} - end PR environment info -->/$pr_info}"
   else
