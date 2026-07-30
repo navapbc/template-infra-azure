@@ -11,5 +11,5 @@ output "tf_state_storage_container_name" {
 }
 
 output "tf_state_storage_container_scope" {
-  value = azurerm_storage_container.tf_state.resource_manager_id
+  value = azurerm_storage_container.tf_state.id
 }
