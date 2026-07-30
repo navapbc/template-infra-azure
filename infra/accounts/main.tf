@@ -19,7 +19,7 @@ locals {
   # Choose the region where this infrastructure should be deployed.
   region = module.project_config.default_region
 
-  # Set project tags that will be used to tag all resources. 
+  # Set project tags that will be used to tag all resources.
   tags = merge(module.project_config.default_tags, {
     description = "Backend resources required for terraform state management and GitHub authentication."
   })
@@ -38,7 +38,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.79.0"
+      version = "~> 5.0.0"
     }
   }
 
@@ -52,19 +52,25 @@ data "external" "account_ids_by_name" {
 }
 
 provider "azurerm" {
-  features {}
+  subscription_id = local.subscription_id
+
+  resource_provider_registrations = "none"
+  resource_providers_to_register  = module.project_config.azure_resource_providers_autoenable ? module.project_config.azure_resource_providers : []
+
   storage_use_azuread = true
 
-  subscription_id = local.subscription_id
+  features {}
 }
 
 provider "azurerm" {
-  alias = "shared"
+  alias           = "shared"
+  subscription_id = local.shared_subscription_id
 
-  features {}
+  resource_provider_registrations = "none"
+
   storage_use_azuread = true
 
-  subscription_id = local.shared_subscription_id
+  features {}
 }
 
 module "project_config" {

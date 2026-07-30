@@ -68,7 +68,7 @@ configuration in the container definition.
 Secrets are defined in the same file that non-sensitive environment variables
 are defined, `infra/<APP_NAME>/app-config/env-config/environment_variables.tf`.
 Modify the `secrets` map to define the secrets that the application will have
-access to.  For each secret, the map key defines the environment variable name.
+access to. For each secret, the map key defines the environment variable name.
 The `manage_method` property, which can be set to `"generated"` or `"manual"`,
 defines whether or not to generate a random secret or to reference an existing
 secret that was manually created and stored. The `secret_name` property defines
@@ -95,3 +95,8 @@ locals {
 ```
 
 > ⚠️ For secrets with `manage_method = "manual"`, make sure you store the secret in Azure Key Vault *before* you try to add configure your application service with the secrets, or else the deploy will fail trying to look for a secret name that doesn't exist.
+
+Note that by default, every service+environment combination uses its own Key
+Vault. Referencing secrets that are in a shared Key Vault or that are shared
+across all environments of a service are [not supported via this configuration
+currently](https://github.com/navapbc/template-infra-azure/issues/33).

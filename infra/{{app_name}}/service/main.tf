@@ -29,7 +29,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.79.0"
+      version = "~> 5.0.0"
     }
   }
 
@@ -44,25 +44,28 @@ data "external" "account_ids_by_name" {
 }
 
 provider "azurerm" {
+  subscription_id = data.external.account_ids_by_name.result[local.environment_config.account_name]
+
+  resource_provider_registrations = "none"
+
   use_oidc            = true
   storage_use_azuread = true
 
   features {}
-
-  subscription_id = data.external.account_ids_by_name.result[local.environment_config.account_name]
 }
 
 provider "azurerm" {
   alias = "domain"
+  # fall back to current subscription so provider can be initialized, but we
+  # won't use it if hosted_zone_subscription_id is not defined
+  subscription_id = local.hosted_zone_subscription_id != null ? local.hosted_zone_subscription_id : data.external.account_ids_by_name.result[local.environment_config.account_name]
+
+  resource_provider_registrations = "none"
 
   use_oidc            = true
   storage_use_azuread = true
 
   features {}
-
-  # fall back to current subscription so provider can be initialized, but we
-  # won't use it if hosted_zone_subscription_id is not defined
-  subscription_id = local.hosted_zone_subscription_id != null ? local.hosted_zone_subscription_id : data.external.account_ids_by_name.result[local.environment_config.account_name]
 }
 
 module "project_config" {

@@ -7,7 +7,6 @@ resource "azurerm_subnet" "subnet" {
   resource_group_name  = var.resource_group_name
   virtual_network_name = var.vnet_name
   address_prefixes     = ["${var.subnet_config.subnet_cidr}"]
-  service_endpoints    = try(var.subnet_config.service_endpoints, [])
 
   # mark the subnet as private by default, egress to the internet should be
   # through the NAT Gateway or other explicit configuration
@@ -21,6 +20,14 @@ resource "azurerm_subnet" "subnet" {
   # the subnet since Private Link Service does not support network policies like
   # user-defined Routes and Network Security Groups.
   private_link_service_network_policies_enabled = true
+
+  dynamic "service_endpoint" {
+    for_each = try(var.subnet_config.service_endpoints, [])
+
+    content {
+      service = service_endpoint.value
+    }
+  }
 
   dynamic "delegation" {
     for_each = try(var.subnet_config.service_delegation, [])
