@@ -60,11 +60,6 @@ base_tenant_id:
   help: Azure tenant
   when: *base
 
-base_default_certificate_contact_email:
-  type: str
-  help: Email address to use for generated TLS certificates
-  when: *base
-
 #
 # App vars
 #
