@@ -108,6 +108,16 @@ resource "azurerm_key_vault_key" "tf_state" {
   # checkov:skip=CKV_AZURE_40:Key is auto-rotated with no ultimate expiration date
 }
 
+module "vault_monitor" {
+  count = length(azurerm_key_vault.tf_state) > 0 ? 1 : 0
+
+  source = "../azure/monitor/key-vault"
+  enable = var.monitor_config.enabled
+
+  target_resource_id         = azurerm_key_vault.tf_state[0].id
+  log_analytics_workspace_id = var.monitor_config.log_analytics_workspace_id
+}
+
 resource "azurerm_user_assigned_identity" "tf_state" {
   count = var.use_customer_managed_encryption_key ? 1 : 0
 
