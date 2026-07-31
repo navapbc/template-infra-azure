@@ -3,13 +3,6 @@ locals {
   storage_account_name = substr("${replace(lower("${local.prefix}"), "/[^a-z0-9]/", "")}${local.storage_config.account_name}", 0, 24)
 }
 
-data "azurerm_log_analytics_workspace" "logs" {
-  count = module.app_config.has_blob_storage && !local.is_temporary ? 1 : 0
-
-  name                = "logs"
-  resource_group_name = module.network.resource_group_name
-}
-
 module "storage" {
   count  = module.app_config.has_blob_storage ? 1 : 0
   source = "../../modules/storage"
@@ -22,7 +15,7 @@ module "storage" {
 
   monitor_config = {
     enabled                    = !local.is_temporary
-    log_analytics_workspace_id = !local.is_temporary ? data.azurerm_log_analytics_workspace.logs[0].id : ""
+    log_analytics_workspace_id = data.azurerm_log_analytics_workspace.logs.id
   }
 
   # Grant storage access to service identities

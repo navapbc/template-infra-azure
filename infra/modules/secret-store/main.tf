@@ -24,3 +24,11 @@ resource "azurerm_key_vault" "vault" {
   # checkov:skip=CKV_AZURE_109:TODO disable public access
   # checkov:skip=CKV2_AZURE_32:TODO disable public access
 }
+
+module "vault_monitor" {
+  source = "../azure/monitor/key-vault"
+  enable = var.monitor_config.enabled
+
+  target_resource_id         = azurerm_key_vault.vault.id
+  log_analytics_workspace_id = var.monitor_config.log_analytics_workspace_id
+}

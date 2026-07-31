@@ -86,6 +86,11 @@ module "endpoint_refs" {
   source = "../../modules/azure/private-endpoint-dns-refs"
 }
 
+data "azurerm_log_analytics_workspace" "logs" {
+  name                = "logs"
+  resource_group_name = module.network.resource_group_name
+}
+
 resource "azurerm_resource_group" "service" {
   count = local.is_temporary ? 0 : 1
 

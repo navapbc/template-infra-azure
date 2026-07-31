@@ -22,3 +22,10 @@ variable "sku_name" {
     error_message = "The sku_name must be one of the following: standard, premium."
   }
 }
+
+variable "monitor_config" {
+  type = object({
+    enabled                    = bool
+    log_analytics_workspace_id = string
+  })
+}
