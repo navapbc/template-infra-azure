@@ -33,3 +33,12 @@ variable "log_analytics_workspace_resource_id" {
 variable "application_gateway_subnet_name" {
   type = string
 }
+
+variable "use_inline_nsg_association" {
+  type        = bool
+  default     = false
+  description = <<-EOT
+    If your project is subject to Azure Policy rules that require subnets to
+    have an NSG association for creation (and/or during updates).
+  EOT
+}

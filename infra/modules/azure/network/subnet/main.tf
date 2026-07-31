@@ -21,6 +21,16 @@ resource "azurerm_subnet" "subnet" {
   # user-defined Routes and Network Security Groups.
   private_link_service_network_policies_enabled = true
 
+  # Some Azure Policies strictly require Network Security Group (and/or Route
+  # Table) associations to be explicitly specified within the Subnet
+  # creation/update payload itself, rather than being attached later via
+  # separate association resources.
+  #
+  # This is otherwise managed by the
+  # `azurerm_subnet_network_security_group_association.subnet` resource
+  network_security_group_id_wo         = var.use_inline_nsg_association ? azurerm_network_security_group.subnet.id : null
+  network_security_group_id_wo_version = var.use_inline_nsg_association ? parseint(substr(sha256(azurerm_network_security_group.subnet.id), 0, 7), 16) : null
+
   dynamic "service_endpoint" {
     for_each = try(var.subnet_config.service_endpoints, [])
 

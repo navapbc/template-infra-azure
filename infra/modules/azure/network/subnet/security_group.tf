@@ -9,6 +9,8 @@ resource "azurerm_network_security_group" "subnet" {
 }
 
 resource "azurerm_subnet_network_security_group_association" "subnet" {
+  count = var.use_inline_nsg_association ? 0 : 1
+
   subnet_id                 = azurerm_subnet.subnet.id
   network_security_group_id = azurerm_network_security_group.subnet.id
 }
