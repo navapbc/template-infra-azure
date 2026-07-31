@@ -1,4 +1,4 @@
-resource "azurerm_monitor_diagnostic_setting" "tf_state" {
+resource "azurerm_monitor_diagnostic_setting" "storage" {
   for_each = toset(var.enable ? ["account", "blob", "queue", "table", "file"] : [])
 
   name                       = var.name
