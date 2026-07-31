@@ -4,7 +4,8 @@ variable "enable" {
 }
 
 variable "name" {
-  type = string
+  type    = string
+  default = null
 }
 
 variable "target_resource_id" {

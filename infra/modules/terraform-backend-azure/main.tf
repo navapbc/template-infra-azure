@@ -61,7 +61,6 @@ module "storage_monitor" {
   source = "../azure/monitor/storage"
   enable = var.monitor_config.enabled
 
-  name                       = azurerm_storage_account.tf_state.name
   target_resource_id         = azurerm_storage_account.tf_state.id
   log_analytics_workspace_id = var.monitor_config.log_analytics_workspace_id
 }
