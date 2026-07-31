@@ -33,18 +33,10 @@ resource "azurerm_key_vault" "certs" {
   # checkov:skip=CKV2_AZURE_32:TODO disable public access
 }
 
-resource "azurerm_monitor_diagnostic_setting" "tf_state" {
-  count = var.monitor_config.enabled ? 1 : 0
+module "vault_monitor" {
+  source = "../../azure/monitor/key-vault"
+  enable = var.monitor_config.enabled
 
-  name                       = module.cert_interface.cert_vault_name
   target_resource_id         = azurerm_key_vault.certs.id
   log_analytics_workspace_id = var.monitor_config.log_analytics_workspace_id
-
-  enabled_log {
-    category_group = "audit" # or "allLogs"
-  }
-
-  enabled_metric {
-    category = "AllMetrics"
-  }
 }
