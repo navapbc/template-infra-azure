@@ -5,10 +5,22 @@ variable "enable" {
 
 variable "subnet_id" {
   type = string
+
+  validation {
+    condition = var.enable ? var.subnet_id != null && var.subnet_id != "" : true
+
+    error_message = "A 'subnet_id' must be provided when 'enable' is set to true."
+  }
 }
 
 variable "resource_id" {
   type = string
+
+  validation {
+    condition = var.enable ? var.resource_id != null && var.resource_id != "" : true
+
+    error_message = "A 'resource_id' must be provided when 'enable' is set to true."
+  }
 }
 
 variable "subresource_names" {

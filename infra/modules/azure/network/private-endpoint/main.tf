@@ -16,21 +16,21 @@ locals {
     "vaults" : ["vault"]
   }
 
-  target_resource_info     = provider::azurerm::parse_resource_id(var.resource_id)
-  target_resource_type     = local.target_resource_info["resource_type"]
-  target_resource_name     = local.target_resource_info["resource_name"]
-  target_resource_provider = local.target_resource_info["resource_provider"]
+  target_resource_info     = var.enable ? provider::azurerm::parse_resource_id(var.resource_id) : null
+  target_resource_type     = try(local.target_resource_info["resource_type"], null)
+  target_resource_name     = try(local.target_resource_info["resource_name"], null)
+  target_resource_provider = try(local.target_resource_info["resource_provider"], null)
 
   subresource_names = var.subresource_names != null ? var.subresource_names : try(local.default_service_subresource_names[local.target_resource_type], [])
 
-  subnet_info    = provider::azurerm::parse_resource_id(var.subnet_id)
-  subnet_rg_name = local.subnet_info["resource_group_name"]
+  subnet_info    = var.enable ? provider::azurerm::parse_resource_id(var.subnet_id) : null
+  subnet_rg_name = try(local.subnet_info["resource_group_name"], null)
 
-  private_endpoint_name     = var.name != null ? var.name : substr(local.target_resource_info["resource_name"], 0, 64)
+  private_endpoint_name     = var.name != null ? var.name : try(substr(local.target_resource_info["resource_name"], 0, 64), null)
   private_endpoint_rg_name  = var.resource_group_name != null ? var.resource_group_name : local.subnet_rg_name
-  private_endpoint_location = data.azurerm_resource_group.subnet_rg.location
+  private_endpoint_location = local.subnet_rg_name != null ? data.azurerm_resource_group.subnet_rg[0].location : null
 
-  dns_zone_name = var.dns_zone_key != null ? module.endpoint_refs.zones[var.dns_zone_key] : try(module.endpoint_refs.zones_by_provider[local.target_resource_provider], module.endpoint_refs.zones_by_type[local.target_resource_type])
+  dns_zone_name = var.dns_zone_key != null ? module.endpoint_refs.zones[var.dns_zone_key] : try(module.endpoint_refs.zones_by_provider[local.target_resource_provider], module.endpoint_refs.zones_by_type[local.target_resource_type], null)
 }
 
 module "endpoint_refs" {
@@ -38,10 +38,14 @@ module "endpoint_refs" {
 }
 
 data "azurerm_resource_group" "subnet_rg" {
+  count = local.subnet_rg_name != null ? 1 : 0
+
   name = local.subnet_rg_name
 }
 
 data "azurerm_private_dns_zone" "service_zone" {
+  count = local.subnet_rg_name != null ? 1 : 0
+
   name                = local.dns_zone_name
   resource_group_name = local.subnet_rg_name
 }
@@ -63,6 +67,6 @@ resource "azurerm_private_endpoint" "service" {
 
   private_dns_zone_group {
     name                 = local.target_resource_name
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.service_zone.id]
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.service_zone[0].id]
   }
 }
