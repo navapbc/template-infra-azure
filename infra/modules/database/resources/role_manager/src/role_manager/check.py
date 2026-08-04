@@ -2,7 +2,7 @@ import os
 
 from pg8000.native import Connection, literal
 
-import role_manager.db as db
+from role_manager import db
 
 
 def check_main():
