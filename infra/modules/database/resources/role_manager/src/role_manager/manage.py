@@ -4,7 +4,7 @@ from operator import itemgetter
 
 from pg8000.native import Connection, identifier, literal
 
-import role_manager.db as db
+from role_manager import db
 
 
 def manage_main():
