@@ -8,10 +8,14 @@ description: |
   app-config.
 
   Authenticate using one of the following options:
-  1. Authenticate by network_name
-  2. Authenticate by app_name and environment
+  1. Authenticate by account_name
+  2. Authenticate by network_name
+  3. Authenticate by app_name and environment.
 
 inputs:
+  account_name:
+    description: 'Name of account, must match <ACCOUNT_NAME> in <ACCOUNT_NAME>.<ACCOUNT_ID>.azurerm.tfbackend file in /infra/accounts'
+    required: false
   network_name:
     description: 'Name of network (e.g. dev, staging, prod)'
     required: false
@@ -39,6 +43,7 @@ runs:
 
     - name: Get account name from network
       id: get-account-name
+      if: ${{ inputs.network_name || steps.get-network-name.outputs.network_name }}
       run: |
         network_name="${{ inputs.network_name || steps.get-network-name.outputs.network_name }}"
         echo "Get account name for network: ${network_name}"
@@ -54,7 +59,7 @@ runs:
       run: |
         echo "::group::Azure account authentication details"
 
-        account_name="${{ steps.get-account-name.outputs.account_name }}"
+        account_name="${{ inputs.account_name || steps.get-account-name.outputs.account_name }}"
 
         terraform -chdir=infra/project-config init > /dev/null
         terraform -chdir=infra/project-config apply -auto-approve > /dev/null
@@ -86,4 +91,3 @@ runs:
         tenant-id: ${{ env.ARM_TENANT_ID }}
         subscription-id: ${{ steps.get-azure-config.outputs.subscription_id }}
         client-id: ${{ env.ARM_CLIENT_ID }}
-
