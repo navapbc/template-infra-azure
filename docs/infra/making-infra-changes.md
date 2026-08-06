@@ -41,8 +41,8 @@ scripts that the Makefile uses:
 
 ```bash
 project-root$ ./bin/terraform-init app/service dev
-project-root$ ./bin/terraform-apply app/service dev
-project-root$ ./bin/terraform-init-and-apply app/service dev  # calls init and apply in the same script
+project-root$ ./bin/terraform-run app/service dev apply
+project-root$ ./bin/terraform-init-and-run app/service dev apply # calls init and apply in the same script
 ```
 
 Look in the script files for more details on usage.

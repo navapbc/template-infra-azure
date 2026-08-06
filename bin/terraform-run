@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# -----------------------------------------------------------------------------
+# Convenience script for running a terraform command for the specified module
+# and configuration name. The configuration name is used to determine which
+# .tfvars file to use for the -var-file option of terraform command (if
+# applicable).
+#
+# Additional arguments are passed to the terraform command, but can also be
+# passed in using terraform's built-in environment variables TF_CLI_ARGS and
+# TF_CLI_ARGS_name. For example, in CI/CD pipelines, if running an `apply` you
+# may want to set TF_CLI_ARGS="-input=false -auto-approve" to skip the
+# confirmation prompt.
+#
+# Note, any relative file paths provided in arguments will be interpreted
+# relative to $module_dir.
+#
+# See https://developer.hashicorp.com/terraform/cli/config/environment-variables#tf_cli_args-and-tf_cli_args_name
+#
+# Positional parameters:
+#   module_dir (required) - The location of the root module to run against
+#   config_name (required) - The name of the tfvars config.
+#     For accounts, the config name is the <account name>.<account id>
+#     For application modules the config name is the name of the environment (e.g. "dev", "staging", "prod").
+#     For application modules that are shared across environments, the config name is "shared".
+#     For example if a backend config file is named "myaccount.<backend type>.tfbackend", then the config_name would be "myaccount"
+#   tf_command (required) - A Terraform command to run
+#
+#   All following arguments are passed to the $tf_command verbatim.
+# -----------------------------------------------------------------------------
+set -euo pipefail
+
+module_dir="$1"
+config_name="$2"
+
+tf_args=("${@:3}")
+
+# A simplifying assumption for current use cases, could be fancier if needed
+tf_cmd="${tf_args[0]}"
+case "${tf_cmd}" in
+  plan | apply | destroy | console | graph | taint | untaint | import | refresh)
+    supports_vars="true"
+    ;;
+  *)
+    supports_vars="false"
+    ;;
+esac
+
+# Set working directory to the terraform root module directory
+cd "${module_dir}"
+
+# If a tfvars file exists with the same name as the backend config file, use it
+# for the run (if the underlying Terraform command supports it). Similar to
+# `.auto.tfvars` files, but more "selectively" automatic (if you will).
+tf_vars_file="${config_name}.tfvars"
+if [[ ${supports_vars} == "true" ]] && [[ -f ${tf_vars_file} ]]; then
+  tf_args+=("-var-file=${tf_vars_file}")
+fi
+
+# tf_args oddness to support Bash < v4.4
+# https://stackoverflow.com/a/7577209
+terraform ${tf_args[@]+"${tf_args[@]}"}
