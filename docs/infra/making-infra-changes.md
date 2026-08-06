@@ -59,6 +59,6 @@ service resources in the dev environment, cd to the `infra/app/service`
 directory and run:
 
 ```bash
-infra/app/service$ terraform init -backend-config=dev.s3.tfbackend
+infra/app/service$ terraform init -backend-config=dev.azurerm.tfbackend
 infra/app/service$ terraform apply -var-file=dev.tfvars
 ```

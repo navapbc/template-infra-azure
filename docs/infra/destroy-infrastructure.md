@@ -10,7 +10,7 @@ be destroyed last.
    following, replacing `dev` with the environment you're destroying.
 
    ```bash
-   $ terraform init --backend-config=dev.s3.tfbackend
+   $ terraform init --backend-config=dev.azurerm.tfbackend
    $ terraform destroy -var-file=dev.tfvars
    ```
 1. Then the same for `/infra/app/database` and all networks.

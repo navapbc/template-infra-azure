@@ -47,7 +47,7 @@ First, make sure that the Terraform root module is initialized to the dev
 environment
 
 ```bash
-terraform -chdir=infra/<APP_NAME>/service init -reconfigure -backend-config=dev.s3.tfbackend
+terraform -chdir=infra/<APP_NAME>/service init -reconfigure -backend-config=dev.azurerm.tfbackend
 ```
 
 Then create a new workspace. Since the workspace name is used to prefix resource
