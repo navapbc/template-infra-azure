@@ -44,7 +44,6 @@ db_migrator_user_client_id=$(terraform -chdir="infra/${app_name}/service" output
 job_name=$(terraform -chdir="infra/${app_name}/service" output -raw service_job_name)
 resource_group=$(terraform -chdir="infra/${app_name}/service" output -raw service_resource_group)
 
-
 echo
 echo "::group::Step 1. Update job definition"
 
@@ -60,7 +59,8 @@ echo 'Step 2. Run "db-migrate" command'
 command='["db-migrate"]'
 
 # later lines indented to look nicer in the output of run-app-job
-environment_variables=$(cat << EOF
+environment_variables=$(
+  cat << EOF
 [
     { "name": "DB_USER", "value": "$db_migrator_user" },
     { "name": "AZURE_CLIENT_ID", "value": "$db_migrator_user_client_id" },

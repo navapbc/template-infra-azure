@@ -24,13 +24,12 @@ else
   exit 1
 fi
 
-
 image_registry_name="$(terraform -chdir="infra/${app_name}/app-config" output -json build_repository_config | jq -r ".registry_name")"
 image_registry_subscription_id="$(terraform -chdir="infra/${app_name}/app-config" output -json build_repository_config | jq -r ".account_id")"
 
 result=""
-result=$(az acr repository show-tags --subscription "${image_registry_subscription_id}" --name "${image_registry_name}" --repository "${image_repository_name}" --query "[?contains(@, '$image_tag')]" -o tsv 2> /dev/null ) || true
-if [ -n "${result}" ];then
+result=$(az acr repository show-tags --subscription "${image_registry_subscription_id}" --name "${image_registry_name}" --repository "${image_repository_name}" --query "[?contains(@, '$image_tag')]" -o tsv 2> /dev/null) || true
+if [ -n "${result}" ]; then
   echo "true"
 else
   echo "false"

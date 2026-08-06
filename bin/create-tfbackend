@@ -26,8 +26,8 @@ tf_state_key="${4:-${module_dir}/${backend_config_name}.tfstate}"
 backend_config_file="${module_dir}/${backend_config_name}.azurerm.tfbackend"
 
 # Ensure we have the correct account state to read from
-if [[ "${module_dir}" != "infra/accounts" ]]; then
-    ./bin/terraform-init "infra/accounts" "$(./bin/account-config-name "${account_name}")"
+if [[ ${module_dir} != "infra/accounts" ]]; then
+  ./bin/terraform-init "infra/accounts" "$(./bin/account-config-name "${account_name}")"
 fi
 
 # Get the name of the storage resource(s) that was created for the tf state
@@ -55,10 +55,8 @@ sed -i.bak "s/<TF_STATE_CONTAINER_NAME>/${tf_state_container_name}/g" "${backend
 sed -i.bak "s|<TF_STATE_KEY>|${tf_state_key}|g" "${backend_config_file}"
 sed -i.bak "s|<TF_STATE_SUBSCRIPTION_ID>|${tf_state_subscription_id}|g" "${backend_config_file}"
 
-
 # Remove the backup file created by sed
 rm "${backend_config_file}.bak"
-
 
 echo "Created file: ${backend_config_file}"
 echo "------------------ file contents ------------------"
