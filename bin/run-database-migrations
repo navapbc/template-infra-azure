@@ -69,6 +69,6 @@ environment_variables=$(
 EOF
 )
 
-subscription_id=$(./bin/network-name-for-app-environment "${app_name}" "${environment}" | ./bin/account-name-for-network | { network_name=$(cat); ./bin/account-ids-by-name | jq -r ".${network_name}"; })
+subscription_id=$(./bin/account-id-for-app-environment "${app_name}" "${environment}")
 
 ./bin/run-app-job --subscription-id "${subscription_id}" --environment-variables "${environment_variables}" "${job_name}" "${resource_group}" "${command}"
