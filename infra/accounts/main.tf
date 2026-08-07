@@ -8,6 +8,7 @@ locals {
   # be created first), which should be set by other means like the
   # ARM_SUBSCRIPTION_ID env var.
   shared_subscription_id = try(data.external.account_ids_by_name.result[local.shared_account_name], local.subscription_id)
+  is_shared_subscription = var.account_name == local.shared_account_name
 
   # These must match the name of the resources created while bootstrapping the account in set-up-account
   tf_state_resource_group_name = "${module.project_config.project_name}-tf"
@@ -117,13 +118,6 @@ module "auth_github_actions" {
   tf_state_storage_container_scope = module.backend.tf_state_storage_container_scope
 
   resource_owners = local.infra_admin_config.object_ids
-}
-
-resource "azurerm_dns_zone" "shared_zone" {
-  count = module.project_config.shared_hosted_zone != null && local.is_shared_subscription ? 1 : 0
-
-  name                = module.project_config.shared_hosted_zone
-  resource_group_name = azurerm_resource_group.subscription.name
 }
 
 module "certificate_store" {

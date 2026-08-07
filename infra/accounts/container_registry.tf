@@ -1,6 +1,5 @@
 locals {
-  is_shared_subscription = var.account_name == local.shared_account_name
-  container_registry_id  = local.is_shared_subscription ? module.container_registry_resource[0].container_registry_id : module.container_registry_data[0].container_registry_id
+  container_registry_id = local.is_shared_subscription ? module.container_registry_resource[0].container_registry_id : module.container_registry_data[0].container_registry_id
 }
 
 module "container_registry_interface" {
