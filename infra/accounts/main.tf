@@ -34,7 +34,7 @@ locals {
 data "azurerm_client_config" "current" {}
 
 terraform {
-  required_version = "~>1.11.0"
+  required_version = "~> 1.15.0"
 
   required_providers {
     azurerm = {
