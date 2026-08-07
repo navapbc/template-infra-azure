@@ -6,17 +6,18 @@ be destroyed last.
 
 ## Instructions
 
-1. First, destroy all your environments. Within `/infra/app/service` run the
-   following, replacing `dev` with the environment you're destroying.
+1. First, destroy all of your application environments. For each app and
+   environment, run:
 
    ```bash
-   $ terraform init --backend-config=dev.azurerm.tfbackend
-   $ terraform destroy -var-file=dev.tfvars
+   TF_CLI_ARGS_apply="-destroy" make infra-update-app-service APP_NAME=<APP_NAME> ENVIRONMENT=<ENVIRONMENT>
    ```
-1. Then the same for `/infra/app/database` and all networks.
-1. Then since we're going to be destroying the tfstate buckets, you'll want to
-   move the tfstate file out of S3 and back to your local system. Comment out or
-   delete the azurerm backend configuration:
+
+1. Run similar for the all app databases (`infra-update-app-database`) and then
+   all networks (`infra-update-network`).
+1. Then, since we're going to be destroying the tfstate storage location, you'll
+   want to move the tfstate file out of remote storage and back to your local
+   system. Comment out or delete the remote backend configuration:
 
    ```terraform
    # infra/accounts/main.tf
@@ -28,14 +29,15 @@ be destroyed last.
    ```
 
 1. Then run the following from within the `infra/accounts` directory to copy the
-   `tfstate` back to a local `tfstate` file:
+   remote `tfstate` back to a local `tfstate` file:
 
    ```bash
    terraform init -force-copy
    ```
 
-1. Finally, you can run `terraform destroy` within the `infra/accounts` directory.
+1. Finally, you can run `terraform destroy` within the `infra/accounts`
+   directory.
 
    ```bash
-   terraform destroy
+   TF_CLI_ARGS_apply="-destroy" make infra-update-account ACCOUNT_NAME=<ACCOUNT_NAME>
    ```
