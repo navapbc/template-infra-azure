@@ -80,21 +80,26 @@ infra-configure-app-service: ## Configure infra/$APP_NAME/service module's tfbac
 	@:$(call check_defined, ENVIRONMENT, the name of the application environment e.g. "prod" or "staging")
 	./bin/create-tfbackend "infra/$(APP_NAME)/service" "$(ENVIRONMENT)" $$(./bin/network-name-for-app-environment $(APP_NAME) $(ENVIRONMENT) | ./bin/account-name-for-network)
 
+terraform_update_cmd := apply
+ifdef PLAN_ONLY
+  terraform_update_cmd := plan
+endif
+
 infra-update-account: ## Update infra resources for $ACCOUNT_NAME
 	@:$(call check_defined, ACCOUNT_NAME, human readable name for account e.g. "prod")
-	./bin/terraform-init-and-apply infra/accounts $$(./bin/account-config-name "$(ACCOUNT_NAME)")
+	./bin/terraform-init-and-run infra/accounts $$(./bin/account-config-name "$(ACCOUNT_NAME)") $(terraform_update_cmd) $(args)
 
 infra-update-current-account: ## Update infra resources for primary account associated with current shell environment credentials
-	./bin/terraform-init-and-apply infra/accounts $$(./bin/current-account-config-name)
+	./bin/terraform-init-and-run infra/accounts $$(./bin/current-account-config-name) $(terraform_update_cmd) $(args)
 
 infra-update-network: ## Update network
 	@:$(call check_defined, NETWORK_NAME, the name of the network in /infra/networks)
-	./bin/terraform-init-and-apply infra/networks $(NETWORK_NAME) -var="network_name=$(NETWORK_NAME)"
+	./bin/terraform-init-and-run infra/networks $(NETWORK_NAME) $(terraform_update_cmd) -var="network_name=$(NETWORK_NAME)" $(args)
 
 infra-update-app-database: ## Create or update $APP_NAME's database module for $ENVIRONMENT
 	@:$(call check_defined, APP_NAME, "the name of subdirectory of /infra that holds the application's infrastructure code")
 	@:$(call check_defined, ENVIRONMENT, the name of the application environment e.g. "prod" or "staging")
-	./bin/terraform-init-and-apply infra/$(APP_NAME)/database $(ENVIRONMENT) -var="environment_name=$(ENVIRONMENT)"
+	./bin/terraform-init-and-run infra/$(APP_NAME)/database $(ENVIRONMENT) $(terraform_update_cmd) -var="environment_name=$(ENVIRONMENT)" $(args)
 
 infra-update-app-database-roles: ## Create or update database roles and schemas for $APP_NAME's database in $ENVIRONMENT
 	@:$(call check_defined, APP_NAME, "the name of subdirectory of /infra that holds the application's infrastructure code")
@@ -104,7 +109,7 @@ infra-update-app-database-roles: ## Create or update database roles and schemas 
 infra-update-app-service: ## Create or update $APP_NAME's web service module
 	@:$(call check_defined, APP_NAME, "the name of subdirectory of /infra that holds the application's infrastructure code")
 	@:$(call check_defined, ENVIRONMENT, the name of the application environment e.g. "prod" or "staging")
-	./bin/terraform-init-and-apply infra/$(APP_NAME)/service $(ENVIRONMENT) -var="environment_name=$(ENVIRONMENT)"
+	./bin/terraform-init-and-run infra/$(APP_NAME)/service $(ENVIRONMENT) $(terraform_update_cmd) -var="environment_name=$(ENVIRONMENT)" $(args)
 
 # The prerequisite for this rule is obtained by
 # prefixing each module with the string "infra-validate-module-"

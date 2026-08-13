@@ -8,14 +8,14 @@ script_dir=$(readlink -f "$0" | xargs dirname)
 
 # Move up to the root since we want to do everything relative to that. Note that this only impacts
 # this script, but will leave the user wherever they were when the script exists.
-cd "${script_dir}/.." >/dev/null || exit 1
+cd "${script_dir}/.." > /dev/null || exit 1
 
 link_check_config=".github/workflows/markdownlint-config.json"
 
 if command -v markdown-link-check > /dev/null; then
-    link_check_cmd=markdown-link-check
+  link_check_cmd=markdown-link-check
 else
-    link_check_cmd="npx markdown-link-check"
+  link_check_cmd="npx markdown-link-check"
 fi
 
 # Run the linter against each markdown file that's tracked in git

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# -----------------------------------------------------------------------------
+# Convenience script for running terraform init followed by another terraform
+# command. See ./bin/terraform-init and ./bin/terraform-run for more details.
+# -----------------------------------------------------------------------------
+set -euo pipefail
+
+# only uses the first two arguments, but for simplicity just pass everything
+./bin/terraform-init "$@"
+
+./bin/terraform-run "$@"

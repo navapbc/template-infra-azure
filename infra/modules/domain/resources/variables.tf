@@ -44,5 +44,6 @@ variable "cert_vault_id" {
 }
 
 variable "cert_contact_email" {
-  type = string
+  type    = string
+  default = null
 }

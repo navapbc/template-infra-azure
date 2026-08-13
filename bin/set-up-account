@@ -69,12 +69,12 @@ echo
 echo "${green}""Creating resource group""${restore}"
 resource_group_exists=$(az group exists --subscription "${account_id}" --name "${resource_group_name}")
 if [[ ${resource_group_exists} == "false" ]]; then
-    az group create --subscription "${account_id}" \
-        --name "${resource_group_name}" \
-        --location "${location}"
-    echo "${green}""Resource group created""${restore}"
+  az group create --subscription "${account_id}" \
+    --name "${resource_group_name}" \
+    --location "${location}"
+  echo "${green}""Resource group created""${restore}"
 else
-    echo "${green}""Resource group already exists""${restore}"
+  echo "${green}""Resource group already exists""${restore}"
 fi
 
 echo "${green}""Checking storage provider registration""${restore}"
@@ -94,33 +94,33 @@ storage_account_check=$(az storage account check-name --subscription "${account_
 storage_account_not_exists=$(echo "${storage_account_check}" | jq -j .nameAvailable)
 storage_account_reason=$(echo "${storage_account_check}" | jq -j .reason)
 if [[ ${storage_account_not_exists} == "true" ]]; then
-    az storage account create --subscription "${account_id}" \
-        --name "${storage_account_name}" \
-        --resource-group "${resource_group_name}" \
-        --location "${location}" \
-        --kind StorageV2 \
-        --sku Standard_GRS \
-        --https-only true \
-        --min-tls-version TLS1_2 \
-        --encryption-key-type-for-queue "Account" \
-        --encryption-key-type-for-table "Account"
-    echo "${green}""Storage account created""${restore}"
-elif [[ "${storage_account_reason}" != "null" && "${storage_account_reason}" != "AlreadyExists" ]]; then
-    echo "Storage account name issue: ${storage_account_check}"
-    exit 1
+  az storage account create --subscription "${account_id}" \
+    --name "${storage_account_name}" \
+    --resource-group "${resource_group_name}" \
+    --location "${location}" \
+    --kind StorageV2 \
+    --sku Standard_GRS \
+    --https-only true \
+    --min-tls-version TLS1_2 \
+    --encryption-key-type-for-queue "Account" \
+    --encryption-key-type-for-table "Account"
+  echo "${green}""Storage account created""${restore}"
+elif [[ ${storage_account_reason} != "null" && ${storage_account_reason} != "AlreadyExists" ]]; then
+  echo "Storage account name issue: ${storage_account_check}"
+  exit 1
 else
-    echo "${green}""Storage account already exists""${restore}"
+  echo "${green}""Storage account already exists""${restore}"
 fi
 
 echo "${green}""Creating storage container""${restore}"
 container_exists=$(az storage container exists --subscription "${account_id}" --name ${storage_container_name} --account-name "${storage_account_name}" | jq -j .exists)
 if [[ ${container_exists} == "false" ]]; then
-    az storage container create --subscription "${account_id}" \
-        --name ${storage_container_name} \
-        --account-name "${storage_account_name}"
-    echo "${green}""Storage container created""${restore}"
+  az storage container create --subscription "${account_id}" \
+    --name ${storage_container_name} \
+    --account-name "${storage_account_name}"
+  echo "${green}""Storage container created""${restore}"
 else
-    echo "${green}""Storage container already exists""${restore}"
+  echo "${green}""Storage container already exists""${restore}"
 fi
 
 echo

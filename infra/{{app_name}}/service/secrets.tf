@@ -28,6 +28,11 @@ module "secret_store" {
   vault_name              = local.vault_name
   resource_group_location = azurerm_resource_group.secrets[0].location
   resource_group_name     = azurerm_resource_group.secrets[0].name
+
+  monitor_config = {
+    enabled                    = true
+    log_analytics_workspace_id = data.azurerm_log_analytics_workspace.logs.id
+  }
 }
 
 module "secrets" {

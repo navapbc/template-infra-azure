@@ -46,8 +46,8 @@ DOCKER_COMMAND=$CONTAINER_CMD az acr login --subscription "${image_registry_subs
 
 echo "Check if tag has already been published..."
 result=""
-result=$(az acr repository show-tags --subscription "${image_registry_subscription_id}" --name "${image_registry_name}" --repository "${image_repository_name}" --query "[?contains(@, '${image_tag}')]" -o tsv 2> /dev/null ) || true
-if [ -n "${result}" ];then
+result=$(az acr repository show-tags --subscription "${image_registry_subscription_id}" --name "${image_registry_name}" --repository "${image_repository_name}" --query "[?contains(@, '${image_tag}')]" -o tsv 2> /dev/null) || true
+if [ -n "${result}" ]; then
   echo "Image with tag ${image_tag} already published"
   exit 0
 fi

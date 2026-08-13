@@ -33,8 +33,8 @@ make infra-configure-app-service APP_NAME=<APP_NAME> ENVIRONMENT=<ENVIRONMENT>
 
 `APP_NAME` needs to be the name of the application folder within the `infra`
 folder. `ENVIRONMENT` needs to be the name of the environment you are creating.
-This will create a file called
-`<ENVIRONMENT>.s3.tfbackend` in the `infra/app/service` module directory.
+This will create a file called `<ENVIRONMENT>.azurerm.tfbackend` in the
+`infra/app/service` module directory.
 
 Depending on the value of `has_database` in the app-config module
 (`infra/<APP_NAME>/app-config/main.tf`), the application will be configured with
@@ -70,4 +70,3 @@ to apply the changes.
 ```bash
 TF_CLI_ARGS_apply="-var=image_tag=<IMAGE_TAG>" make infra-update-app-service APP_NAME=<APP_NAME> ENVIRONMENT=<ENVIRONMENT>
 ```
-

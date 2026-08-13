@@ -81,7 +81,6 @@ resource "azurerm_storage_account" "nw" {
 module "storage_monitor" {
   source = "../../monitor/storage"
 
-  name                       = azurerm_storage_account.nw.name
   target_resource_id         = azurerm_storage_account.nw.id
   log_analytics_workspace_id = var.log_analytics_workspace_resource_id
 }

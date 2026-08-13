@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+app_name="$1"
+environment_name="$2"
+
+./bin/network-name-for-app-environment "${app_name}" "${environment_name}" | ./bin/account-name-for-network | {
+  network_name=$(cat)
+  ./bin/account-ids-by-name | jq -r ".${network_name}"
+}

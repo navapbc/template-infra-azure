@@ -34,7 +34,6 @@ gh api --method PUT \
   -f "include_claim_keys[]=repo"
 echo "...done"
 
-
 echo
 echo "New OIDC subject settings:"
 gh api \

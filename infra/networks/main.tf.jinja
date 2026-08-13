@@ -156,7 +156,7 @@ module "domain" {
   certificate_configs = local.certificate_configs
 
   cert_vault_id      = module.certificate_store.cert_vault_id
-  cert_contact_email = try(local.domain_config.cert_contact_email, module.project_config.default_certificate_contact_email)
+  cert_contact_email = try(local.domain_config.cert_contact_email, module.project_config.default_certificate_contact_email, null)
 }
 
 module "cert_endpoint" {

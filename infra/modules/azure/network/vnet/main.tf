@@ -38,4 +38,6 @@ module "subnet" {
   application_gateway_subnet_name = try(var.vnet_config.application_gateway_subnet_name, null)
 
   log_analytics_workspace_resource_id = var.log_analytics_workspace_resource_id
+
+  use_inline_nsg_association = try(var.vnet_config.use_inline_nsg_association, false)
 }

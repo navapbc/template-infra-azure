@@ -41,8 +41,8 @@ scripts that the Makefile uses:
 
 ```bash
 project-root$ ./bin/terraform-init app/service dev
-project-root$ ./bin/terraform-apply app/service dev
-project-root$ ./bin/terraform-init-and-apply app/service dev  # calls init and apply in the same script
+project-root$ ./bin/terraform-run app/service dev apply
+project-root$ ./bin/terraform-init-and-run app/service dev apply # calls init and apply in the same script
 ```
 
 Look in the script files for more details on usage.
@@ -59,6 +59,6 @@ service resources in the dev environment, cd to the `infra/app/service`
 directory and run:
 
 ```bash
-infra/app/service$ terraform init -backend-config=dev.s3.tfbackend
+infra/app/service$ terraform init -backend-config=dev.azurerm.tfbackend
 infra/app/service$ terraform apply -var-file=dev.tfvars
 ```

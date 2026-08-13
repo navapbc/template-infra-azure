@@ -31,7 +31,7 @@ output "default_tags" {
     repository          = local.code_repository_url
     terraform           = true
     terraform_workspace = terraform.workspace
-    # description is set in each environments local use key project_description if required.        
+    # description is set in each environments local use key project_description if required.
   }
 }
 
@@ -45,7 +45,7 @@ output "network_configs" {
 }
 
 output "default_certificate_contact_email" {
-  value = local.default_certificate_contact_email
+  value = null
 }
 
 output "manage_privatelink_dns" {
