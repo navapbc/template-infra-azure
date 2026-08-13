@@ -49,20 +49,14 @@ function base62_decode() {
   local s=$1
   local n=0
 
-  # Handle empty string
-  if [ -z "$s" ]; then
-    echo "0"
-    return
-  fi
-
   for ((i = 0; i < ${#s}; i++)); do
     c=${s:i:1}
     pos=${digits%%"$c"*}
 
     # Check if character is valid (if pos equals digits, character wasn't found)
     if [ "$pos" = "$digits" ]; then
-      echo "0"
-      return
+      echo "Invalid Base 62 character: ${c}"
+      return 1
     fi
 
     n=$((n * 62 + ${#pos}))
