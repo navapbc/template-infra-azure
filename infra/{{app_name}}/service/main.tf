@@ -15,7 +15,7 @@ locals {
   service_config     = local.environment_config.service_config
 
   service_name        = "${local.prefix}${local.service_config.service_name}"
-  resource_group_name = "${local.service_config.service_name}-service"
+  resource_group_name = local.service_config.resource_group_name
 
   network_config           = module.project_config.network_configs[local.environment_config.network_name]
   private_endpoints_subnet = lookup(module.network.subnets, try(local.network_config.network.private_endpoints_subnet_name, ""), null)

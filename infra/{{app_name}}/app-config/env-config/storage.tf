@@ -8,7 +8,7 @@ locals {
   # extra entropy, since Azure storage account names share a single global
   # namespace and short prefixes collide easily.
   storage_account_name = substr(
-    "${replace(lower("${var.app_name}${var.environment}"), "/[^a-z0-9]/", "")}st${substr(md5("${var.project_name}-${var.app_name}-${var.environment}"), 0, 8)}",
+    "${replace(lower("${local.service_name}"), "/[^a-z0-9]/", "")}st${substr(md5("${var.project_name}-${local.service_name}"), 0, 8)}",
     0,
     24,
   )
