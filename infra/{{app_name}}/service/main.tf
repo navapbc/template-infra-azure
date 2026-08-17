@@ -160,6 +160,10 @@ module "service" {
     }
   } : null
 
+  extra_environment_variables = merge(
+    local.service_config.extra_environment_variables
+  )
+
   is_temporary = local.is_temporary
 
   depends_on = [
