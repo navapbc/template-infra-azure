@@ -37,7 +37,7 @@ tf_args=("${@:3}")
 # A simplifying assumption for current use cases, could be fancier if needed
 tf_cmd="${tf_args[0]}"
 case "${tf_cmd}" in
-  plan | apply | destroy | console | graph | taint | untaint | import | refresh)
+  plan | apply | destroy | console | graph | taint | untaint | import | refresh | state)
     supports_vars="true"
     ;;
   *)
