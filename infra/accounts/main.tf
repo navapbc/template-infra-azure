@@ -20,9 +20,8 @@ locals {
   # Choose the region where this infrastructure should be deployed.
   region = module.project_config.default_region
 
-  # Set project tags that will be used to tag all resources.
+  # General tags for resources in the account layer.
   tags = merge(module.project_config.default_tags, {
-    description = "Backend resources required for terraform state management and GitHub authentication."
   })
 
   # To ease initial account setup, fallback to an owner list of just the current
@@ -81,6 +80,8 @@ module "project_config" {
 resource "azurerm_resource_group" "subscription" {
   name     = module.project_config.project_name
   location = local.region
+
+  tags = local.tags
 }
 
 resource "azurerm_log_analytics_workspace" "subscription_logs" {
@@ -89,11 +90,15 @@ resource "azurerm_log_analytics_workspace" "subscription_logs" {
   resource_group_name = azurerm_resource_group.subscription.name
   sku                 = "PerGB2018"
   retention_in_days   = 30
+
+  tags = local.tags
 }
 
 resource "azurerm_resource_group" "tf_state" {
   name     = var.tf_state_resource_group_name_override != null ? var.tf_state_resource_group_name_override : local.tf_state_resource_group_name
   location = local.region
+
+  tags = local.tags
 }
 
 module "backend" {
@@ -108,6 +113,8 @@ module "backend" {
     enabled                    = true
     log_analytics_workspace_id = azurerm_log_analytics_workspace.subscription_logs.id
   }
+
+  tags = local.tags
 }
 
 module "auth_github_actions" {
@@ -130,4 +137,6 @@ module "certificate_store" {
     enabled                    = true
     log_analytics_workspace_id = azurerm_log_analytics_workspace.subscription_logs.id
   }
+
+  tags = local.tags
 }

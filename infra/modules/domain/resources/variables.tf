@@ -47,3 +47,9 @@ variable "cert_contact_email" {
   type    = string
   default = null
 }
+
+variable "tags" {
+  description = "A map of tags for associated resources."
+  type        = map(string)
+  default     = {}
+}

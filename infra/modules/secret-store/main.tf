@@ -23,6 +23,8 @@ resource "azurerm_key_vault" "vault" {
   # checkov:skip=CKV_AZURE_189:TODO disable public access
   # checkov:skip=CKV_AZURE_109:TODO disable public access
   # checkov:skip=CKV2_AZURE_32:TODO disable public access
+
+  tags = var.tags
 }
 
 module "vault_monitor" {

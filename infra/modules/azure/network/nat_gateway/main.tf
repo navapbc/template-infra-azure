@@ -14,6 +14,8 @@ resource "azurerm_public_ip" "nat_gateway_ip" {
   sku                 = "Standard"
   zones               = local.logical_zones
 
+  tags = var.tags
+
   lifecycle {
     prevent_destroy = false
   }
@@ -32,6 +34,8 @@ resource "azurerm_nat_gateway" "nat_gateway" {
   resource_group_name     = var.resource_group_name
   sku_name                = "Standard"
   idle_timeout_in_minutes = 10
+
+  tags = var.tags
 }
 
 resource "azurerm_nat_gateway_public_ip_association" "nat_gateway_ip_association" {

@@ -18,6 +18,8 @@ resource "azurerm_private_dns_zone" "service_zone" {
 
   name                = module.endpoint_refs.zones[each.key]
   resource_group_name = var.resource_group_name
+
+  tags = var.tags
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "link" {
@@ -28,6 +30,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "link" {
 
   virtual_network_id = module.vnet.vnet_id
 
+  tags = var.tags
 }
 
 module "container_registry_endpoint" {
@@ -37,4 +40,6 @@ module "container_registry_endpoint" {
   subnet_id           = local.use_private_endpoints ? module.vnet.subnets[var.network_config.network.private_endpoints_subnet_name].id : null
   resource_id         = var.container_registry_id
   resource_group_name = var.resource_group_name
+
+  tags = var.tags
 }

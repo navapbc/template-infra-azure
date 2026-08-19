@@ -29,3 +29,9 @@ variable "monitor_config" {
     log_analytics_workspace_id = string
   })
 }
+
+variable "tags" {
+  description = "A map of tags for associated resources."
+  type        = map(string)
+  default     = {}
+}

@@ -37,6 +37,8 @@ resource "azurerm_public_ip" "pip_v4" {
 
   ip_version = "IPv4"
 
+  tags = var.tags
+
   lifecycle {
     prevent_destroy = false
   }
@@ -48,6 +50,8 @@ resource "azurerm_user_assigned_identity" "app_gateway" {
   name                = "${var.service_name}-gateway-uai"
   resource_group_name = var.resource_group_name
   location            = var.resource_group_location
+
+  tags = var.tags
 }
 
 resource "azurerm_role_assignment" "app_gateway_cert_secret" {
@@ -231,6 +235,8 @@ resource "azurerm_application_gateway" "service" {
     rewrite_rule_set_name      = local.rewrite_rule_set_name
   }
 
+  tags = var.tags
+
   depends_on = [
     azurerm_public_ip.pip_v4[0],
     azurerm_role_assignment.app_gateway_cert_secret
@@ -251,4 +257,6 @@ resource "azurerm_dns_a_record" "service" {
   zone_name           = var.domain_hosted_zone_name
   ttl                 = 300
   target_resource_id  = azurerm_public_ip.pip_v4[0].id
+
+  tags = var.tags
 }

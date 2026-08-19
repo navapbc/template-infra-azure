@@ -79,6 +79,11 @@ locals {
   certificate_configs = try(local.domain_config.manage_certs, local.use_application_gateway) ? merge(local.auto_generated_domain_cert_configs, local.manual_cert_configs) : local.manual_cert_configs
 
   container_registry_config = local.apps_in_network[0].build_repository_config
+
+  # General tags for resources in the network layer.
+  tags = merge(module.project_config.default_tags, {
+    network_name = var.network_name
+  })
 }
 
 {% for app_name in app_names %}
@@ -101,6 +106,8 @@ module "network_interface" {
 resource "azurerm_resource_group" "network" {
   name     = module.network_interface.resource_group_name
   location = local.location
+
+  tags = local.tags
 }
 
 resource "azurerm_log_analytics_workspace" "logs" {
@@ -109,6 +116,8 @@ resource "azurerm_log_analytics_workspace" "logs" {
   resource_group_name = azurerm_resource_group.network.name
   sku                 = "PerGB2018"
   retention_in_days   = 30
+
+  tags = local.tags
 }
 
 module "network" {
@@ -126,6 +135,8 @@ module "network" {
 
   container_registry_id   = local.container_registry_config.registry_id
   container_registry_name = local.container_registry_config.registry_name
+
+  tags = local.tags
 }
 
 module "certificate_store" {
@@ -155,6 +166,8 @@ module "domain" {
 
   cert_vault_id      = module.certificate_store.cert_vault_id
   cert_contact_email = try(local.domain_config.cert_contact_email, module.project_config.default_certificate_contact_email, null)
+
+  tags = local.tags
 }
 
 module "cert_endpoint" {
@@ -163,4 +176,6 @@ module "cert_endpoint" {
   enable      = try(local.network_config.network.private_endpoints_subnet_name, null) != null
   subnet_id   = try(module.network.subnets[local.network_config.network.private_endpoints_subnet_name].id, null)
   resource_id = module.certificate_store.cert_vault_id
+
+  tags = local.tags
 }

@@ -7,4 +7,6 @@ module "vnet" {
   log_analytics_workspace_resource_id  = var.log_analytics_workspace_resource_id
   log_analytics_workspace_workspace_id = var.log_analytics_workspace_workspace_id
   log_analytics_workspace_location     = var.log_analytics_workspace_location
+
+  tags = var.tags
 }

@@ -94,6 +94,8 @@ resource "azurerm_postgresql_flexible_server" "db" {
     }
   }
 
+  tags = var.tags
+
   # checkov:skip=CKV2_AZURE_57:Server is using Private Access/VNet integration mode, instead of explicit private endpoint
 }
 

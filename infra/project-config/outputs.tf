@@ -31,7 +31,6 @@ output "default_tags" {
     repository          = local.code_repository_url
     terraform           = true
     terraform_workspace = terraform.workspace
-    # description is set in each environments local use key project_description if required.
   }
 }
 

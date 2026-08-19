@@ -43,6 +43,8 @@ resource "azurerm_storage_account" "tf_state" {
     }
   }
 
+  tags = var.tags
+
   lifecycle {
     ignore_changes = [customer_managed_key]
   }
@@ -83,6 +85,8 @@ resource "azurerm_key_vault" "tf_state" {
   # checkov:skip=CKV_AZURE_189:TODO disable public access
   # checkov:skip=CKV_AZURE_109:TODO disable public access
   # checkov:skip=CKV2_AZURE_32:TODO disable public access
+
+  tags = var.tags
 }
 
 resource "azurerm_key_vault_key" "tf_state" {
@@ -102,6 +106,8 @@ resource "azurerm_key_vault_key" "tf_state" {
     expire_after         = "P1Y"
     notify_before_expiry = "P29D"
   }
+
+  tags = var.tags
 
   # checkov:skip=CKV_AZURE_112:HSM backed keys may be desired, but defaulting to a regular key
   # checkov:skip=CKV_AZURE_40:Key is auto-rotated with no ultimate expiration date
@@ -123,6 +129,8 @@ resource "azurerm_user_assigned_identity" "tf_state" {
   name                = "${var.storage_account_name}-uai"
   location            = var.location
   resource_group_name = var.resource_group_name
+
+  tags = var.tags
 }
 
 resource "azurerm_role_assignment" "tf_state_key" {

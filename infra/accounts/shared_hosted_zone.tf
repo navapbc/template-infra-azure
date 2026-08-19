@@ -8,6 +8,8 @@ resource "azurerm_dns_zone" "shared_zone" {
 
   name                = module.project_config.shared_hosted_zone
   resource_group_name = azurerm_resource_group.subscription.name
+
+  tags = local.tags
 }
 
 data "azurerm_dns_zone" "shared_zone" {

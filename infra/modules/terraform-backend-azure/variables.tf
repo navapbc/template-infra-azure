@@ -26,3 +26,9 @@ variable "use_customer_managed_encryption_key" {
   type    = bool
   default = false
 }
+
+variable "tags" {
+  description = "A map of tags for associated resources."
+  type        = map(string)
+  default     = {}
+}

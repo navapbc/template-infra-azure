@@ -21,6 +21,8 @@ module "container_registry_resource" {
   # resource_group_name           = azurerm_resource_group.subscription.name
   resource_group_name = module.container_registry_interface.container_registry_resource_group_name
   location            = azurerm_resource_group.subscription.location
+
+  tags = local.tags
 }
 
 module "container_registry_data" {

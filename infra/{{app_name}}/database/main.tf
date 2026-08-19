@@ -17,6 +17,11 @@ locals {
   network_config = module.project_config.network_configs[local.environment_config.network_name]
 
   location = try(local.network_config.network.location, module.project_config.default_region)
+
+  # General tags for resources in the database layer.
+  tags = merge(module.project_config.default_tags, {
+    environment = var.environment_name
+  })
 }
 
 terraform {
@@ -80,6 +85,8 @@ module "network" {
 resource "azurerm_resource_group" "db" {
   name     = local.resource_group_name
   location = local.location
+
+  tags = local.tags
 }
 
 module "database" {
@@ -101,4 +108,6 @@ module "database" {
   dns_zone_id   = data.azurerm_private_dns_zone.db.id
   location      = azurerm_resource_group.db.location
   flex_sku_name = "B_Standard_B1ms"
+
+  tags = local.tags
 }

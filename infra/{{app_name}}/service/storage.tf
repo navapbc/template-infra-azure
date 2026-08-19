@@ -26,6 +26,8 @@ module "storage" {
       description  = "App service managed identity"
     }
   ]
+
+  tags = local.tags
 }
 
 module "storage_endpoint" {
@@ -36,4 +38,6 @@ module "storage_endpoint" {
   resource_id       = module.app_config.has_blob_storage ? module.storage[0].storage_account_id : ""
   dns_zone_key      = "blob"
   subresource_names = ["blob"]
+
+  tags = local.tags
 }

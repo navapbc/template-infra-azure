@@ -42,3 +42,9 @@ variable "use_inline_nsg_association" {
     have an NSG association for creation (and/or during updates).
   EOT
 }
+
+variable "tags" {
+  description = "A map of tags for associated resources."
+  type        = map(string)
+  default     = {}
+}

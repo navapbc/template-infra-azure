@@ -19,3 +19,9 @@ variable "log_analytics_workspace_workspace_id" {
 variable "log_analytics_workspace_location" {
   type = string
 }
+
+variable "tags" {
+  description = "A map of tags for associated resources."
+  type        = map(string)
+  default     = {}
+}

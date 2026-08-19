@@ -12,3 +12,9 @@ variable "location" {
   type        = string
   description = "NAT Gateway Location"
 }
+
+variable "tags" {
+  description = "A map of tags for associated resources."
+  type        = map(string)
+  default     = {}
+}

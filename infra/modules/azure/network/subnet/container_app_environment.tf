@@ -26,4 +26,6 @@ resource "azurerm_container_app_environment" "env" {
     name                  = "Consumption"
     workload_profile_type = "Consumption"
   }
+
+  tags = var.tags
 }

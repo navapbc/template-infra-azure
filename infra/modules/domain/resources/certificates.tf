@@ -56,4 +56,6 @@ resource "azurerm_key_vault_certificate" "key_vault_certificate" {
   certificate {
     contents = acme_certificate.certificate[each.key].certificate_p12
   }
+
+  tags = var.tags
 }

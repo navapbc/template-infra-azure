@@ -17,6 +17,8 @@ resource "azurerm_key_vault_secret" "secret" {
   value        = random_password.secret[0].result
   key_vault_id = var.key_vault_id
 
+  tags = var.tags
+
   # Azure Key Vault Secrets requires a value to be populated
   # and resets to the initial value unless we ignore changes
   lifecycle {

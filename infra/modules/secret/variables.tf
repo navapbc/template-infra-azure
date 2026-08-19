@@ -21,3 +21,9 @@ variable "secret_name" {
 variable "key_vault_id" {
   type = string
 }
+
+variable "tags" {
+  description = "A map of tags for associated resources."
+  type        = map(string)
+  default     = {}
+}

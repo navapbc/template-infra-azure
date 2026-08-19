@@ -21,6 +21,11 @@ locals {
   private_endpoints_subnet = lookup(module.network.subnets, try(local.network_config.network.private_endpoints_subnet_name, ""), null)
 
   location = try(local.network_config.network.location, module.project_config.default_region)
+
+  # General tags for resources in the service layer.
+  tags = merge(module.project_config.default_tags, {
+    environment = var.environment_name
+  })
 }
 
 terraform {
@@ -96,6 +101,8 @@ resource "azurerm_resource_group" "service" {
 
   name     = local.resource_group_name
   location = local.location
+
+  tags = local.tags
 }
 
 module "service" {
@@ -165,6 +172,8 @@ module "service" {
   )
 
   is_temporary = local.is_temporary
+
+  tags = local.tags
 
   dependencies = [
     # we directly depend on modules.secrets above, but the service can't access

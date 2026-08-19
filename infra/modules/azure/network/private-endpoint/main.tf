@@ -69,4 +69,6 @@ resource "azurerm_private_endpoint" "service" {
     name                 = local.target_resource_name
     private_dns_zone_ids = [data.azurerm_private_dns_zone.service_zone[0].id]
   }
+
+  tags = var.tags
 }

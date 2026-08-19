@@ -26,6 +26,8 @@ resource "azurerm_dns_zone" "zone" {
   count               = var.manage_dns && var.create_dns_zone ? 1 : 0
   name                = var.name
   resource_group_name = var.resource_group_name
+
+  tags = var.tags
 }
 
 data "azurerm_dns_zone" "zone" {

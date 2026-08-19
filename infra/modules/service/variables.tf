@@ -169,6 +169,12 @@ variable "application_gateway_sku_name" {
   }
 }
 
+variable "tags" {
+  description = "A map of tags for associated resources."
+  type        = map(string)
+  default     = {}
+}
+
 variable "dependencies" {
   type        = list(any)
   default     = null

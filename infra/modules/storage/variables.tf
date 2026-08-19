@@ -70,3 +70,9 @@ variable "principals_with_access" {
     error_message = "If condition is specified, condition_version must also be specified (and vice versa)."
   }
 }
+
+variable "tags" {
+  description = "A map of tags for associated resources."
+  type        = map(string)
+  default     = {}
+}

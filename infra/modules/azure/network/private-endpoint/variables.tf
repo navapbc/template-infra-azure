@@ -44,3 +44,9 @@ variable "resource_group_name" {
   default     = null
   description = "Resource Group for the Private Endpoint resource. If not specified, will use the resource group of the subnet."
 }
+
+variable "tags" {
+  description = "A map of tags for associated resources."
+  type        = map(string)
+  default     = {}
+}

@@ -74,6 +74,8 @@ resource "azurerm_storage_account" "nw" {
     }
   }
 
+  tags = var.tags
+
   # checkov:skip=CKV_AZURE_33:Logging is set up via Azure Monitor
   # checkov:skip=CKV2_AZURE_1:TODO use customer managed key for all encryption needs
 }
@@ -106,4 +108,6 @@ resource "azurerm_network_watcher_flow_log" "vnet" {
     workspace_resource_id = var.log_analytics_workspace_resource_id
     interval_in_minutes   = 10
   }
+
+  tags = var.tags
 }

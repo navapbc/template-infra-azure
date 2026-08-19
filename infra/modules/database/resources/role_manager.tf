@@ -14,6 +14,8 @@ resource "azurerm_user_assigned_identity" "db_role_manager" {
   name                = "${local.role_manager_name}-uai"
   location            = var.location
   resource_group_name = var.resource_group_name
+
+  tags = var.tags
 }
 
 resource "azurerm_role_assignment" "db_role_manager" {
@@ -118,4 +120,6 @@ resource "azurerm_container_app_job" "db_role_manager" {
       }
     }
   }
+
+  tags = var.tags
 }

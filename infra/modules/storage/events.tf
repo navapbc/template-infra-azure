@@ -8,4 +8,6 @@ resource "azurerm_eventgrid_system_topic" "storage" {
   location            = var.resource_group_location
   source_resource_id  = azurerm_storage_account.storage.id
   topic_type          = "Microsoft.Storage.StorageAccounts"
+
+  tags = var.tags
 }

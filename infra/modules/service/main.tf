@@ -48,6 +48,8 @@ resource "azurerm_user_assigned_identity" "app" {
   location            = var.resource_group_location
   name                = "${var.service_name}-app"
   resource_group_name = var.resource_group_name
+
+  tags = var.tags
 }
 
 resource "terraform_data" "waiter" {
@@ -145,12 +147,16 @@ resource "azurerm_container_app" "service" {
       latest_revision = true
     }
   }
+
+  tags = var.tags
 }
 
 resource "azurerm_user_assigned_identity" "migrator" {
   location            = var.resource_group_location
   name                = "${var.service_name}-migrator"
   resource_group_name = var.resource_group_name
+
+  tags = var.tags
 }
 
 resource "azurerm_container_app_job" "service_job" {
@@ -219,4 +225,6 @@ resource "azurerm_container_app_job" "service_job" {
       }
     }
   }
+
+  tags = var.tags
 }

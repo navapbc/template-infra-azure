@@ -6,6 +6,8 @@ resource "azurerm_network_security_group" "subnet" {
   name                = "nsg-${var.name}"
   location            = var.location
   resource_group_name = var.resource_group_name
+
+  tags = var.tags
 }
 
 resource "azurerm_subnet_network_security_group_association" "subnet" {

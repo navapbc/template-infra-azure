@@ -13,6 +13,8 @@ resource "azurerm_virtual_network" "vnet" {
   name                = var.name
   address_space       = ["${var.vnet_config.vnet_cidr}"]
   location            = local.location
+
+  tags = var.tags
 }
 
 module "nat_gateway" {
@@ -22,6 +24,8 @@ module "nat_gateway" {
   resource_group_name = var.resource_group_name
   vnet_name           = azurerm_virtual_network.vnet.name
   location            = local.location
+
+  tags = var.tags
 }
 
 module "subnet" {
@@ -40,4 +44,6 @@ module "subnet" {
   log_analytics_workspace_resource_id = var.log_analytics_workspace_resource_id
 
   use_inline_nsg_association = try(var.vnet_config.use_inline_nsg_association, false)
+
+  tags = var.tags
 }

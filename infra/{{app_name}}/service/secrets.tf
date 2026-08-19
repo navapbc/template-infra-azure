@@ -18,6 +18,8 @@ resource "azurerm_resource_group" "secrets" {
 
   name     = local.vault_resource_group_name
   location = local.location
+
+  tags = local.tags
 }
 
 module "secret_store" {
@@ -33,6 +35,8 @@ module "secret_store" {
     enabled                    = true
     log_analytics_workspace_id = data.azurerm_log_analytics_workspace.logs.id
   }
+
+  tags = local.tags
 }
 
 module "secrets" {
@@ -52,6 +56,8 @@ module "secrets" {
   key_vault_id = local.key_vault_id
 
   manage_method = each.value.manage_method
+
+  tags = local.tags
 }
 
 module "secrets_endpoint" {
@@ -60,4 +66,6 @@ module "secrets_endpoint" {
   enable      = !local.is_temporary && local.private_endpoints_subnet != null
   subnet_id   = local.private_endpoints_subnet != null ? local.private_endpoints_subnet.id : null
   resource_id = local.key_vault_id
+
+  tags = local.tags
 }

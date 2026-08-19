@@ -24,6 +24,8 @@ resource "azurerm_dns_txt_record" "service" {
   record {
     value = azurerm_container_app.service.custom_domain_verification_id
   }
+
+  tags = var.tags
 }
 
 resource "azurerm_dns_cname_record" "service" {
@@ -36,6 +38,8 @@ resource "azurerm_dns_cname_record" "service" {
   zone_name           = var.domain_hosted_zone_name
   ttl                 = 300
   record              = azurerm_container_app.service.ingress[0].fqdn
+
+  tags = var.tags
 }
 
 # Longer term would maybe want to support pulling certs from Key Vault, but not

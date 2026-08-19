@@ -36,6 +36,8 @@ resource "azurerm_storage_account" "storage" {
     }
   }
 
+  tags = var.tags
+
   # checkov:skip=CKV_AZURE_33:Logging is set up via Azure Monitor
   # checkov:skip=CKV2_AZURE_1:Customer managed key encryption can be added as a follow-up
 }

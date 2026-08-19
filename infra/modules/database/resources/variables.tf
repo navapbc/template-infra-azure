@@ -76,3 +76,9 @@ variable "server_parameters" {
 variable "resource_owners" {
   type = list(string)
 }
+
+variable "tags" {
+  description = "A map of tags for associated resources."
+  type        = map(string)
+  default     = {}
+}

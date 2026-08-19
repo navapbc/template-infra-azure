@@ -27,4 +27,6 @@ resource "azurerm_container_registry" "registry" {
   # checkov:skip=CKV_AZURE_166:Skip ensure container image quarantine, scan, and mark images verified
   # checkov:skip=CKV_AZURE_139:Skip ensure ACR set to disable public networking
   # checkov:skip=CKV_AZURE_164:Docker Content Trust is retired
+
+  tags = var.tags
 }
