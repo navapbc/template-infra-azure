@@ -1,7 +1,7 @@
-data "azurerm_subscription" "current" {}
+data "azurerm_client_config" "current" {}
 
 locals {
-  network_watcher_storage_bucket_name_unique = "${data.azurerm_subscription.current.subscription_id}-${local.location}-${var.name}"
+  network_watcher_storage_bucket_name_unique = "${data.azurerm_client_config.current.subscription_id}-${local.location}-${var.name}"
 
   # this matches the automatically generated name by Azure
   network_watcher_resource_group_name = "NetworkWatcherRG"

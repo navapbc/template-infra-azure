@@ -1,4 +1,4 @@
-data "azurerm_subscription" "current" {}
+data "azurerm_client_config" "current" {}
 
 module "cert_interface" {
   source = "../interface"
@@ -12,7 +12,7 @@ resource "azurerm_key_vault" "certs" {
   name                = module.cert_interface.cert_vault_name
   location            = module.cert_interface.cert_vault_location
   resource_group_name = module.cert_interface.cert_vault_resource_group_name
-  tenant_id           = data.azurerm_subscription.current.tenant_id
+  tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "standard"
 
   rbac_authorization_enabled = true

@@ -1,4 +1,4 @@
-data "azurerm_subscription" "domain" {
+data "azurerm_client_config" "domain" {
   provider = azurerm.domain
 }
 
@@ -39,7 +39,7 @@ resource "acme_certificate" "certificate" {
 
     config = {
       AZURE_RESOURCE_GROUP  = local.dns_zone.resource_group_name               # DNS zone resource group.
-      AZURE_SUBSCRIPTION_ID = data.azurerm_subscription.domain.subscription_id # DNS zone subscription ID.
+      AZURE_SUBSCRIPTION_ID = data.azurerm_client_config.domain.subscription_id # DNS zone subscription ID.
       AZURE_ZONE_NAME       = local.dns_zone.name                              # Zone name to use inside Azure DNS service to add the TXT record in.
 
       # AZURE_ENVIRONMENT = "public" # Azure environment, one of: public, usgovernment, and china.

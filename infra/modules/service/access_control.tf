@@ -1,5 +1,4 @@
-data "azurerm_subscription" "current" {
-}
+data "azurerm_client_config" "current" {}
 
 resource "azurerm_role_assignment" "app_cr" {
   scope                = var.image_registry_id

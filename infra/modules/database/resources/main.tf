@@ -1,4 +1,4 @@
-data "azurerm_subscription" "current" {
+data "azurerm_client_config" "current" {
 }
 
 locals {
@@ -33,7 +33,7 @@ resource "azuread_group" "db_admin" {
 resource "azurerm_postgresql_flexible_server_active_directory_administrator" "db_admin_group" {
   server_name         = azurerm_postgresql_flexible_server.db.name
   resource_group_name = var.resource_group_name
-  tenant_id           = data.azurerm_subscription.current.tenant_id
+  tenant_id           = data.azurerm_client_config.current.tenant_id
   object_id           = azuread_group.db_admin.object_id
   principal_name      = azuread_group.db_admin.display_name
   principal_type      = "Group"
@@ -81,7 +81,7 @@ resource "azurerm_postgresql_flexible_server" "db" {
     # https://github.com/hashicorp/terraform-provider-azurerm/issues/27895#issuecomment-2462169310
     password_auth_enabled         = false
     active_directory_auth_enabled = true
-    tenant_id                     = data.azurerm_subscription.current.tenant_id
+    tenant_id                     = data.azurerm_client_config.current.tenant_id
   }
 
   dynamic "high_availability" {

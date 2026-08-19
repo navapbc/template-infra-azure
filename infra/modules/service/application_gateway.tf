@@ -57,7 +57,7 @@ resource "azurerm_role_assignment" "app_gateway_cert_secret" {
   # TODO: this should be scoped to the particular cert, but this isn't working
   # https://github.com/hashicorp/terraform-provider-azurerm/issues/24047
   # scope                = var.domain_certificate_secret_id
-  scope                = data.azurerm_subscription.current.id
+  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}"
   role_definition_name = "Key Vault Secrets User"
   principal_id         = azurerm_user_assigned_identity.app_gateway[0].principal_id
 

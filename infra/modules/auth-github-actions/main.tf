@@ -1,4 +1,4 @@
-data "azurerm_subscription" "current" {}
+data "azurerm_client_config" "current" {}
 
 locals {
   subscription_roles = toset([
@@ -69,5 +69,5 @@ resource "azurerm_role_assignment" "subscription_roles" {
   role_definition_name = each.key
 
   principal_id = azuread_service_principal.github_actions.object_id
-  scope        = data.azurerm_subscription.current.id
+  scope        = "/subscriptions/${data.azurerm_client_config.current.subscription_id}"
 }

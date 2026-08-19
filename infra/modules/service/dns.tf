@@ -64,7 +64,7 @@ resource "null_resource" "custom_domain_and_managed_certificate" {
   count = var.manage_dns && local.should_configure_domain_name && !local.use_application_gateway ? 1 : 0
 
   provisioner "local-exec" {
-    command = "az containerapp hostname bind --hostname ${local.custom_fqdn} --resource-group ${var.resource_group_name} --name ${azurerm_container_app.service.name} --environment ${data.azurerm_container_app_environment.env.id} --subscription ${data.azurerm_subscription.current.subscription_id} --validation-method CNAME"
+    command = "az containerapp hostname bind --hostname ${local.custom_fqdn} --resource-group ${var.resource_group_name} --name ${azurerm_container_app.service.name} --environment ${data.azurerm_container_app_environment.env.id} --subscription ${data.azurerm_client_config.current.subscription_id} --validation-method CNAME"
   }
   triggers = {
     settings     = azurerm_dns_cname_record.service[0].id
