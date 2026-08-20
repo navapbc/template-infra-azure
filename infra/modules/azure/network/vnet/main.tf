@@ -32,7 +32,7 @@ module "subnet" {
   vnet_name           = azurerm_virtual_network.vnet.name
   name                = each.key
   subnet_config       = each.value
-  nat_gateway_id      = try(module.nat_gateway[0].nat_gateway_id, "")
+  nat_gateway_id      = one(module.nat_gateway[*].nat_gateway_id)
   location            = local.location
 
   application_gateway_subnet_name = try(var.vnet_config.application_gateway_subnet_name, null)

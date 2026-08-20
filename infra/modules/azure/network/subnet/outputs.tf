@@ -7,5 +7,5 @@ output "id" {
 }
 
 output "container_app_environment_id" {
-  value = try(azurerm_container_app_environment.env[0].id, null)
+  value = one(azurerm_container_app_environment.env[*].id)
 }
