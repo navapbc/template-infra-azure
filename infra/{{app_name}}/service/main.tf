@@ -166,9 +166,15 @@ module "service" {
 
   is_temporary = local.is_temporary
 
-  depends_on = [
+  dependencies = [
     # we directly depend on modules.secrets above, but the service can't access
-    # those secrets until the private endpoint is created
-    module.secrets_endpoint
+    # those secrets until the private endpoint is created and using `depends_on`
+    # directly would block the entire module so this is a bit of a hack
+    #
+    # more ideally the endpoint would be created as a part of the network layer
+    # or would otherwise structure things so the service's secret store lives as
+    # a part of a different layer, but for things as they are now this helps
+    # streamline initial set up
+    module.secrets_endpoint.id
   ]
 }

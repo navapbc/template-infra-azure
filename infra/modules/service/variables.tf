@@ -168,3 +168,16 @@ variable "application_gateway_sku_name" {
     error_message = "Valid values Application Gateway SKU: Basic, Standard_v2, WAF_v2"
   }
 }
+
+variable "dependencies" {
+  type        = list(any)
+  default     = null
+  description = <<EOT
+Utility variable for establishing resources the main service should wait on
+before creation.
+
+The service may depend on some things to run that are hard to capture directly
+as a part of the service definition, this provides a workaround for some use
+cases.
+EOT
+}

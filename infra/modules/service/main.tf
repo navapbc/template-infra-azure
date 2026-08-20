@@ -50,6 +50,10 @@ resource "azurerm_user_assigned_identity" "app" {
   resource_group_name = var.resource_group_name
 }
 
+resource "terraform_data" "waiter" {
+  input = try(length(var.dependencies), 0) > 0 ? var.dependencies : ["skip"]
+}
+
 resource "azurerm_container_app" "service" {
   name                         = var.service_name
   container_app_environment_id = data.azurerm_container_app_environment.env.id
@@ -64,7 +68,8 @@ resource "azurerm_container_app" "service" {
   # existing, should be able to just retry the deploy.
   depends_on = [
     azurerm_role_assignment.app_cr,
-    azurerm_role_assignment.app_secrets
+    azurerm_role_assignment.app_secrets,
+    terraform_data.waiter
   ]
 
   identity {
