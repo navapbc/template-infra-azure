@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# -----------------------------------------------------------------------------
+# Wait for a PR environment's service to become healthy.
+#
+# This is broken out into its own script so the "wait" logic can be shared with
+# the AWS template. The only cloud-specific piece is how "service health" is
+# determined, which is isolated to the is_healthy() function below — projects
+# (or the AWS template) can swap that one function out while reusing the polling
+# loop.
+#
+# Positional parameters:
+#   resource_group (required) – resource group of the Container App
+#   container_app_name (required) – name of the Container App
+# -----------------------------------------------------------------------------
+set -euo pipefail
+
+resource_group="$1"
+container_app_name="$2"
+
+attempt=0
+max_attempts=20
+sleep_seconds=15
+
+# Determine whether the service is healthy. Prints any diagnostic output on
+# failure (captured by the caller and echoed on the final attempt).
+#
+# Azure Container Apps has no clean CLI equivalent of `aws ecs wait
+# services-stable`, so we consider the service healthy when:
+#   1. the Container App's provisioningState is "Succeeded", and
+#   2. its latest revision is both Active and in a Healthy/Running state.
+#
+# To share this script with the AWS template, only this function needs to
+# change (or be symlinked in) — the polling loop below stays the same.
+is_healthy() {
+  local provisioning_state
+  provisioning_state=$(az containerapp show \
+    --resource-group "${resource_group}" \
+    --name "${container_app_name}" \
+    --query "properties.provisioningState" \
+    --output tsv 2>&1) || {
+    echo "az containerapp show failed: ${provisioning_state}"
+    return 1
+  }
+
+  if [ "${provisioning_state}" != "Succeeded" ]; then
+    echo "provisioningState is '${provisioning_state}', want 'Succeeded'"
+    return 1
+  fi
+
+  # Check that the latest revision is active and healthy/running.
+  local revision_status
+  revision_status=$(az containerapp revision list \
+    --resource-group "${resource_group}" \
+    --name "${container_app_name}" \
+    --query "[?properties.active].{health:properties.healthState,running:properties.runningState} | [0]" \
+    --output json 2>&1) || {
+    echo "az containerapp revision list failed: ${revision_status}"
+    return 1
+  }
+
+  local health_state running_state
+  health_state=$(echo "${revision_status}" | jq --raw-output '.health // "Unknown"')
+  running_state=$(echo "${revision_status}" | jq --raw-output '.running // "Unknown"')
+
+  # healthState is "Healthy" once probes pass (or "None" when no probes are
+  # configured); runningState is "Running" once the revision is serving.
+  if { [ "${health_state}" = "Healthy" ] || [ "${health_state}" = "None" ]; } \
+    && [ "${running_state}" = "Running" ]; then
+    return 0
+  fi
+
+  echo "active revision not ready yet (healthState='${health_state}', runningState='${running_state}')"
+  return 1
+}
+
+# Max wait: 20 attempts × 15s sleep = 300s = 5 minutes
+until response=$(is_healthy); do
+  attempt=$((attempt + 1))
+  if [ "${attempt}" -ge "${max_attempts}" ]; then
+    max_wait=$((max_attempts * sleep_seconds))
+    echo "Service did not become healthy after ${max_attempts} attempts (~${max_wait}s worst case)"
+    echo "Last status: ${response}"
+    exit 1
+  fi
+  echo "Attempt ${attempt}/${max_attempts}: service not healthy yet, retrying in ${sleep_seconds}s..."
+  echo "  Status: ${response}"
+  sleep "${sleep_seconds}"
+done
+echo "Service is healthy"
