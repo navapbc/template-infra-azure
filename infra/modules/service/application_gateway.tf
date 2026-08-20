@@ -5,7 +5,6 @@ data "azurerm_location" "location" {
 locals {
   logical_zones = coalesce([for zone in data.azurerm_location.location.zone_mappings : zone.logical_zone], [])
 
-  # azurerm_virtual_network.example.name}-beap"
   gateway_resource_prefix = var.resource_group_name
 
   backend_address_pool_name                 = "${local.gateway_resource_prefix}-beap"
@@ -68,9 +67,6 @@ resource "azurerm_role_assignment" "app_gateway_cert_secret" {
 
 resource "azurerm_application_gateway" "service" {
   count = var.application_gateway_subnet_id != null ? 1 : 0
-
-  # TODO: add depends on the role assignment above? So it can access the cert?
-  # But only when we've defined a cert...
 
   name                = var.service_name
   resource_group_name = var.resource_group_name
@@ -235,7 +231,10 @@ resource "azurerm_application_gateway" "service" {
     rewrite_rule_set_name      = local.rewrite_rule_set_name
   }
 
-  depends_on = [azurerm_public_ip.pip_v4[0]]
+  depends_on = [
+    azurerm_public_ip.pip_v4[0],
+    azurerm_role_assignment.app_gateway_cert_secret
+  ]
 
   lifecycle {
     replace_triggered_by = [azurerm_public_ip.pip_v4[0].id]
