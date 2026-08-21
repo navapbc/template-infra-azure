@@ -129,6 +129,8 @@ module "network" {
   has_blob_storage    = local.has_blob_storage
   resource_group_name = azurerm_resource_group.network.name
 
+  manage_privatelink_dns = module.project_config.manage_privatelink_dns
+
   log_analytics_workspace_resource_id  = azurerm_log_analytics_workspace.logs.id
   log_analytics_workspace_workspace_id = azurerm_log_analytics_workspace.logs.workspace_id
   log_analytics_workspace_location     = azurerm_log_analytics_workspace.logs.location

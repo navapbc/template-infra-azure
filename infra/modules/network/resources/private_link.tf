@@ -1,12 +1,12 @@
 locals {
   use_private_endpoints = try(var.network_config.network.private_endpoints_subnet_name, null) != null
 
-  azure_service_integrations = setunion(
+  azure_service_integrations = var.manage_privatelink_dns ? setunion(
     local.use_private_endpoints ? ["acr", "keyvault"] : [],
 
     var.has_database ? ["postgresql"] : [],
     var.has_blob_storage ? ["blob"] : [],
-  )
+  ) : []
 }
 
 module "endpoint_refs" {

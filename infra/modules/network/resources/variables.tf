@@ -51,3 +51,7 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "manage_privatelink_dns" {
+  type = bool
+}
