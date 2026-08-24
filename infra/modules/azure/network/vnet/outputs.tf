@@ -3,6 +3,5 @@ output "vnet_id" {
 }
 
 output "subnets" {
-  # value = module.subnet
   value = { for subnet in module.subnet : subnet.name => subnet }
 }
