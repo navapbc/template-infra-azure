@@ -3,6 +3,7 @@ data "azurerm_client_config" "current" {
 
 locals {
   enable_high_availability = !startswith(var.flex_sku_name, "B")
+  enable_managed_identity  = var.customer_managed_encryption_key.enable
 
   server_config_params_default = {
     "log_statement"              = "ddl" # Log data definition statements (e.g. DROP, ALTER, CREATE)
@@ -91,6 +92,20 @@ resource "azurerm_postgresql_flexible_server" "db" {
       mode = "ZoneRedundant"
       # Can specify the particular zone if desired.
       # standby_availability_zone =
+    }
+  }
+
+  dynamic "identity" {
+    for_each = local.enable_managed_identity ? [true] : []
+    content {
+      type = "SystemAssigned"
+    }
+  }
+
+  dynamic "customer_managed_key" {
+    for_each = var.customer_managed_encryption_key.enable ? [true] : []
+    content {
+      key_vault_key_id = var.use_customer_managed_encryption_key.key_id
     }
   }
 

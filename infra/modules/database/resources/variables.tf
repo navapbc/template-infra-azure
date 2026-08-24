@@ -79,6 +79,23 @@ variable "server_parameters" {
   default     = {}
 }
 
+variable "customer_managed_encryption_key" {
+  type = object({
+    enable = bool
+    key_id = optional(string)
+  })
+
+  default = {
+    enable = false
+  }
+
+  validation {
+    condition = !var.customer_managed_encryption_key.enable || (var.customer_managed_encryption_key.key_id != null && var.customer_managed_encryption_key.key_id != "")
+
+    error_message = "A 'key_id' must be provided when 'enable' is set to true."
+  }
+}
+
 variable "resource_owners" {
   type = list(string)
 }
