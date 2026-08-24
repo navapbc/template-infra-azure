@@ -17,3 +17,7 @@ output "migrator_object_id" {
 output "role_manager_job_name" {
   value = azurerm_container_app_job.db_role_manager.name
 }
+
+output "engine_version" {
+  value = azurerm_postgresql_flexible_server.db.version
+}

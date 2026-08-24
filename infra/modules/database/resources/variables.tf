@@ -43,6 +43,12 @@ variable "flex_sku_name" {
   default = "GP_Standard_D4ds_v4"
 }
 
+variable "engine_version" {
+  description = "PostgreSQL engine version."
+  type        = string
+  default     = "16"
+}
+
 variable "resource_group_name" {
   type = string
 }
