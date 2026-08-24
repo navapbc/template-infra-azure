@@ -38,14 +38,6 @@ variable "log_analytics_workspace_location" {
   type = string
 }
 
-variable "container_registry_id" {
-  type = string
-}
-
-variable "container_registry_name" {
-  type = string
-}
-
 variable "tags" {
   description = "A map of tags for associated resources."
   type        = map(string)

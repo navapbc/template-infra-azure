@@ -80,6 +80,9 @@ locals {
 
   container_registry_config = local.apps_in_network[0].build_repository_config
 
+  use_private_endpoints       = try(local.network_config.network.private_endpoints_subnet_name, null) != null
+  private_endpoints_subnet_id = try(module.network.subnets[local.network_config.network.private_endpoints_subnet_name].id, null)
+
   # General tags for resources in the network layer.
   tags = merge(module.project_config.default_tags, {
     network_name = var.network_name
@@ -135,9 +138,6 @@ module "network" {
   log_analytics_workspace_workspace_id = azurerm_log_analytics_workspace.logs.workspace_id
   log_analytics_workspace_location     = azurerm_log_analytics_workspace.logs.location
 
-  container_registry_id   = local.container_registry_config.registry_id
-  container_registry_name = local.container_registry_config.registry_name
-
   tags = local.tags
 }
 
@@ -175,9 +175,19 @@ module "domain" {
 module "cert_endpoint" {
   source = "../modules/azure/network/private-endpoint"
 
-  enable      = try(local.network_config.network.private_endpoints_subnet_name, null) != null
-  subnet_id   = try(module.network.subnets[local.network_config.network.private_endpoints_subnet_name].id, null)
+  enable      = local.use_private_endpoints
+  subnet_id   = local.private_endpoints_subnet_id
   resource_id = module.certificate_store.cert_vault_id
+
+  tags = local.tags
+}
+
+module "container_registry_endpoint" {
+  source = "../modules/azure/network/private-endpoint"
+
+  enable              = local.use_private_endpoints
+  subnet_id           = local.use_private_endpoints ? module.vnet.subnets[var.network_config.network.private_endpoints_subnet_name].id : null
+  resource_id         = local.container_registry_config.registry_id
 
   tags = local.tags
 }

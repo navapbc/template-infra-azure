@@ -32,14 +32,3 @@ resource "azurerm_private_dns_zone_virtual_network_link" "link" {
 
   tags = var.tags
 }
-
-module "container_registry_endpoint" {
-  source = "../../../modules/azure/network/private-endpoint"
-
-  enable              = local.use_private_endpoints
-  subnet_id           = local.use_private_endpoints ? module.vnet.subnets[var.network_config.network.private_endpoints_subnet_name].id : null
-  resource_id         = var.container_registry_id
-  resource_group_name = var.resource_group_name
-
-  tags = var.tags
-}
