@@ -5,7 +5,7 @@ data "azurerm_client_config" "domain" {
 locals {
   # Filter configs for issued certificates.
   # These certificates are managed by the project.
-  # TODO: or check that local.dsn_zone exists? Which should be null if we are not managing dns?
+  # TODO: or check that local.dns_zone exists? Which should be null if we are not managing dns?
   issued_certificate_configs = var.manage_dns ? {
     for domain, config in var.certificate_configs : domain => config
     if config.source == "issued"
