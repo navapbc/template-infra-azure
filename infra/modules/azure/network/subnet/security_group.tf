@@ -188,7 +188,7 @@ resource "azurerm_network_security_rule" "allow_gateway_manager_inbound" {
 }
 
 resource "azurerm_network_security_rule" "allow_public_http_inbound" {
-  count = var.name == var.application_gateway_subnet_name ? 1 : 0
+  count = local.enable_internet_access && var.name == var.application_gateway_subnet_name ? 1 : 0
 
   name      = "allow-public-http-inbound"
   priority  = 4006

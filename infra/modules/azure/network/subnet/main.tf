@@ -1,5 +1,6 @@
 locals {
-  enable_nat_gateway = lookup(var.subnet_config, "internet_access", false)
+  enable_internet_access = lookup(var.subnet_config, "internet_access", false)
+  enable_nat_gateway     = local.enable_internet_access
 }
 
 resource "azurerm_subnet" "subnet" {
