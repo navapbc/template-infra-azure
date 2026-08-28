@@ -10,6 +10,9 @@ terraform {
 locals {
   secrets = { for item in var.secrets : item.name => item }
 
+  # The jobs child module only needs the name and versioned id of each secret.
+  job_secrets = [for item in var.secrets : { name = item.name, id = item.id }]
+
   base_environment_variables = [
     { name : "PORT", value : tostring(var.container_port) },
     { name : "IMAGE_TAG", value : var.image_tag },
@@ -159,72 +162,85 @@ resource "azurerm_user_assigned_identity" "migrator" {
   tags = var.tags
 }
 
-resource "azurerm_container_app_job" "service_job" {
-  name                         = "${var.service_name}-job"
+# The migration job. This is the manually triggered job that has always been
+# created by default, now expressed through the shared `jobs` child module so
+# that it and the configurable jobs below stay consistent.
+module "migrator_job" {
+  source = "./jobs"
+
+  job_name       = "${var.service_name}-job"
+  container_name = var.service_name
+
   container_app_environment_id = data.azurerm_container_app_environment.env.id
   resource_group_name          = var.resource_group_name
-  location                     = var.resource_group_location
-  workload_profile_name        = "Consumption"
+  resource_group_location      = var.resource_group_location
+
+  identity_id        = azurerm_user_assigned_identity.migrator.id
+  image_registry_url = var.image_registry_url
+  image_url          = "${var.image_repository_url}:${var.image_tag}"
+
+  cpu    = coalesce(var.job_cpu, var.cpu)
+  memory = coalesce(var.job_memory, var.memory)
+
+  environment_variables = local.environment_variables
+  secrets               = local.job_secrets
+
+  trigger = {
+    type = "manual"
+  }
+
+  tags = var.tags
 
   depends_on = [
     azurerm_role_assignment.migrator_cr,
     azurerm_role_assignment.migrator_secrets
   ]
+}
 
-  identity {
-    type         = "UserAssigned"
-    identity_ids = [azurerm_user_assigned_identity.migrator.id]
-  }
+# Configurable background jobs. Each job runs the same image and configuration
+# as the service, differing only in its command and its trigger.
+#
+# See /docs/infra/background-jobs.md
+module "jobs" {
+  for_each = var.jobs
 
-  registry {
-    server   = var.image_registry_url
-    identity = azurerm_user_assigned_identity.migrator.id
-  }
+  source = "./jobs"
 
-  // Secrets are loaded then referenced by env blocks
-  dynamic "secret" {
-    for_each = local.secrets
+  job_name       = "${var.service_name}-${each.key}"
+  container_name = var.service_name
 
-    content {
-      identity            = azurerm_user_assigned_identity.migrator.id
-      name                = replace(lower(secret.value["name"]), "_", "-")
-      key_vault_secret_id = secret.value["id"]
-    }
-  }
+  container_app_environment_id = data.azurerm_container_app_environment.env.id
+  resource_group_name          = var.resource_group_name
+  resource_group_location      = var.resource_group_location
 
-  replica_timeout_in_seconds = 3600
-  replica_retry_limit        = 0
-  manual_trigger_config {
-    parallelism              = 1
-    replica_completion_count = 1
-  }
+  identity_id        = azurerm_user_assigned_identity.app.id
+  image_registry_url = var.image_registry_url
+  image_url          = "${var.image_repository_url}:${var.image_tag}"
 
-  template {
-    container {
-      name  = var.service_name
-      image = "${var.image_repository_url}:${var.image_tag}"
-      # TODO: or should this be configured separately
-      cpu    = var.cpu
-      memory = var.memory
+  command = each.value.command
+  args    = each.value.args
 
-      dynamic "env" {
-        for_each = local.environment_variables
-        content {
-          name        = env.value["name"]
-          value       = lookup(env.value, "value", null)
-          secret_name = lookup(env.value, "secret_name", null)
-        }
-      }
+  cpu    = coalesce(each.value.cpu, var.job_cpu, var.cpu)
+  memory = coalesce(each.value.memory, var.job_memory, var.memory)
 
-      dynamic "env" {
-        for_each = local.secrets
-        content {
-          name        = env.value["name"]
-          secret_name = replace(lower(env.value["name"]), "_", "-")
-        }
-      }
-    }
-  }
+  replica_timeout_in_seconds = each.value.replica_timeout_in_seconds
+  replica_retry_limit        = each.value.replica_retry_limit
+
+  environment_variables = local.environment_variables
+  secrets               = local.job_secrets
+
+  # Event triggered jobs read from a queue that this module creates on the
+  # service's storage account, so the queue's identity is filled in here
+  # rather than by the caller.
+  trigger = each.value.trigger.type == "event" ? merge(each.value.trigger, {
+    storage_account_name = var.storage_vars.storage_account_name
+    queue_name           = azurerm_storage_queue.file_upload_jobs[each.key].name
+  }) : each.value.trigger
 
   tags = var.tags
+
+  depends_on = [
+    azurerm_role_assignment.app_cr,
+    azurerm_role_assignment.app_secrets
+  ]
 }

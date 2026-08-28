@@ -8,7 +8,13 @@ output "migrator_user_client_id" {
 
 
 output "service_job_name" {
-  value = azurerm_container_app_job.service_job.name
+  description = "The name of the manually triggered job used to run database migrations."
+  value       = module.migrator_job.job_name
+}
+
+output "job_names" {
+  description = "Map from configured background job name to the name of its Container App Job."
+  value       = { for name, job in module.jobs : name => job.job_name }
 }
 
 output "public_endpoint" {

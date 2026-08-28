@@ -35,6 +35,18 @@ variable "service_desired_instance_count" {
   default = 0
 }
 
+variable "service_job_cpu" {
+  description = "Number of cpu units allocated to background job containers. Defaults to the service's cpu setting when unset."
+  type        = number
+  default     = null
+}
+
+variable "service_job_memory" {
+  description = "Amount of memory allocated to background job containers. Defaults to the service's memory setting when unset."
+  type        = string
+  default     = null
+}
+
 variable "service_application_gateway_sku_name" {
   type    = string
   default = "Basic"
