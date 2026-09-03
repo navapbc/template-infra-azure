@@ -14,6 +14,11 @@ output "service_job_name" {
   value = module.service.service_job_name
 }
 
+output "job_names" {
+  description = "Map from configured background job name to the name of its Container App Job."
+  value       = module.service.job_names
+}
+
 output "service_endpoint" {
   description = "The public endpoint for the service."
   value       = module.service.public_endpoint

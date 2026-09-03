@@ -41,3 +41,20 @@ module "storage_endpoint" {
 
   tags = local.tags
 }
+
+# Event triggered jobs read from a storage queue on the same storage account,
+# which has public network access disabled, so the queue subresource needs its
+# own private endpoint. Only created when the app actually defines event
+# triggered jobs.
+module "storage_queue_endpoint" {
+  source = "../../modules/azure/network/private-endpoint"
+
+  enable = local.service_config.has_file_upload_jobs && !local.is_temporary && local.private_endpoints_subnet != null
+
+  subnet_id         = local.private_endpoints_subnet != null ? local.private_endpoints_subnet.id : null
+  resource_id       = module.app_config.has_blob_storage ? module.storage[0].storage_account_id : ""
+  dns_zone_key      = "queue"
+  subresource_names = ["queue"]
+
+  tags = local.tags
+}

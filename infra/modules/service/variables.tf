@@ -67,11 +67,20 @@ variable "db_vars" {
 }
 
 variable "storage_vars" {
-  description = "Variables for integrating the app service with blob storage"
+  description = <<-EOT
+    Variables for integrating the app service with blob storage.
+
+    `eventgrid_system_topic_name` and `resource_group_name` are only required
+    when the service defines event triggered jobs (see `var.jobs`), since those
+    subscribe to blob events on the storage account.
+  EOT
   type = object({
     storage_account_id   = string
     storage_account_name = string
     container_name       = string
+
+    eventgrid_system_topic_name = optional(string)
+    resource_group_name         = optional(string)
   })
   default = null
 }
@@ -97,6 +106,108 @@ variable "memory" {
   type        = string
   default     = "0.5Gi"
   description = "Amount of memory allocated to containers. Limited to 8Gi with default 'Consumption' workload profile and must be specified with CPU in 0.25/0.5Gi increments (e.g., 0.5/1Gi, 0.75/1.5Gi, 1.0/2Gi, 1.25/2.5Gi)."
+}
+
+variable "job_cpu" {
+  type        = number
+  default     = null
+  description = "Number of cpu units allocated to job containers. Defaults to `var.cpu` when unset. Individual jobs can override this via their own `cpu` setting."
+}
+
+variable "job_memory" {
+  type        = string
+  default     = null
+  description = "Amount of memory allocated to job containers. Defaults to `var.memory` when unset. Individual jobs can override this via their own `memory` setting."
+}
+
+variable "jobs" {
+  description = <<-EOT
+    Configurations for background jobs that run alongside the service.
+
+    Each job runs the same container image and the same environment variables
+    and secrets as the service, differing only in the command it runs and what
+    triggers it. The map key is the job's name, which is appended to the
+    service name to form the Container App Job name.
+
+    Supported triggers:
+
+    * `manual` — only runs when started explicitly, e.g. with
+      `az containerapp job start`.
+    * `schedule` — runs on a recurring cron schedule, set by
+      `cron_expression`. Uses the standard five field cron syntax, in UTC.
+    * `event` — runs in response to files uploaded to the service's blob
+      storage container, optionally filtered by `path_prefix`. Requires the
+      application to have blob storage enabled.
+
+    Example:
+
+    ```
+    jobs = {
+      nightly-etl = {
+        command = ["python", "-m", "etl.nightly"]
+        trigger = {
+          type            = "schedule"
+          cron_expression = "0 3 * * *"
+        }
+      }
+
+      process-uploads = {
+        command = ["python", "-m", "etl.process_upload"]
+        cpu     = 1
+        memory  = "2Gi"
+        trigger = {
+          type        = "event"
+          path_prefix = "uploads/"
+        }
+      }
+    }
+    ```
+  EOT
+
+  type = map(object({
+    command = optional(list(string), [])
+    args    = optional(list(string), [])
+
+    cpu    = optional(number)
+    memory = optional(string)
+
+    replica_timeout_in_seconds = optional(number, 3600)
+    replica_retry_limit        = optional(number, 0)
+
+    trigger = object({
+      type                     = string
+      parallelism              = optional(number, 1)
+      replica_completion_count = optional(number, 1)
+
+      # schedule
+      cron_expression = optional(string)
+
+      # event
+      path_prefix                 = optional(string, "")
+      queue_length                = optional(number, 1)
+      min_executions              = optional(number, 0)
+      max_executions              = optional(number, 10)
+      polling_interval_in_seconds = optional(number, 30)
+    })
+  }))
+
+  default = {}
+
+  validation {
+    condition = alltrue([
+      for name, job in var.jobs :
+      contains(["manual", "schedule", "event"], job.trigger.type)
+    ])
+    error_message = "Each job's trigger.type must be one of: manual, schedule, event."
+  }
+
+  validation {
+    condition = alltrue([
+      for name, job in var.jobs :
+      job.trigger.cron_expression != null if job.trigger.type == "schedule"
+    ])
+    error_message = "Jobs with trigger.type \"schedule\" must set trigger.cron_expression."
+  }
 }
 
 # TODO: rename to min_instance_count? It's a little different than AWS.

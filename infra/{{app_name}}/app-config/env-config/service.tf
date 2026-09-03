@@ -17,11 +17,19 @@ locals {
 
     secrets = local.secrets
 
-    # file_upload_jobs = {
-    #   for job_name, job_config in local.file_upload_jobs :
-    #   # For job configs that don't define a source_bucket, add the source_bucket config property
-    #   job_name => merge({ source_bucket = local.bucket_name }, job_config)
-    # }
+    jobs = local.jobs
+
+    # Whether any job is triggered by file uploads. Derived once here because
+    # both the service module and the storage layer need to know, and the
+    # storage layer cannot read it back off the service module without
+    # creating a dependency cycle.
+    has_file_upload_jobs = contains(
+      [for job in values(local.jobs) : job.trigger.type],
+      "event",
+    )
+
+    job_cpu    = var.service_job_cpu
+    job_memory = var.service_job_memory
 
     # ephemeral_write_volumes = []
   }

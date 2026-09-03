@@ -138,6 +138,10 @@ module "service" {
   memory                 = local.service_config.memory
   desired_instance_count = local.service_config.desired_instance_count
 
+  jobs       = local.service_config.jobs
+  job_cpu    = local.service_config.job_cpu
+  job_memory = local.service_config.job_memory
+
   # Note: The secrets will reference the specific hash of the current revision
   # If the secret is manually updated, you will need to re-run terraform apply
   # for the new version to be picked up and updated in the revision
@@ -153,6 +157,9 @@ module "service" {
     storage_account_id   = module.storage[0].storage_account_id
     storage_account_name = module.storage[0].storage_account_name
     container_name       = module.storage[0].container_name
+
+    eventgrid_system_topic_name = module.storage[0].eventgrid_system_topic_name
+    resource_group_name         = local.is_temporary ? local.resource_group_name : azurerm_resource_group.service[0].name
   } : null
 
   db_vars = module.app_config.has_database ? {
