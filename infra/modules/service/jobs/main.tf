@@ -7,12 +7,18 @@ terraform {
 }
 
 locals {
-  # Key Vault secret names are exposed to the container under a normalized
-  # name, since Container Apps secret names must be lowercase and may not
-  # contain underscores.
-  secrets_by_name = { for secret in var.secrets : secret.name => secret }
-
-  secret_name = { for secret in var.secrets : secret.name => replace(lower(secret.name), "_", "-") }
+  # Container Apps secret names must be lowercase and may not contain
+  # underscores, so each Key Vault secret is registered under a normalized
+  # name and referenced by it from the env blocks.
+  #
+  # Keyed by environment variable name, carrying both the Key Vault id and the
+  # normalized secret name so the resource never needs a second lookup.
+  secrets_by_env_name = {
+    for secret in var.secrets : secret.name => {
+      key_vault_secret_id = secret.id
+      secret_name         = replace(lower(secret.name), "_", "-")
+    }
+  }
 }
 
 resource "azurerm_container_app_job" "job" {
@@ -37,12 +43,12 @@ resource "azurerm_container_app_job" "job" {
 
   # Secrets are loaded here, then referenced by the env blocks below.
   dynamic "secret" {
-    for_each = local.secrets_by_name
+    for_each = local.secrets_by_env_name
 
     content {
       identity            = var.identity_id
-      name                = local.secret_name[secret.key]
-      key_vault_secret_id = secret.value.id
+      name                = secret.value.secret_name
+      key_vault_secret_id = secret.value.key_vault_secret_id
     }
   }
 
@@ -116,10 +122,10 @@ resource "azurerm_container_app_job" "job" {
       }
 
       dynamic "env" {
-        for_each = local.secrets_by_name
+        for_each = local.secrets_by_env_name
         content {
-          name        = env.value.name
-          secret_name = local.secret_name[env.key]
+          name        = env.key
+          secret_name = env.value.secret_name
         }
       }
     }

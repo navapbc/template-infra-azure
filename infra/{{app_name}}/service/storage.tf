@@ -49,7 +49,7 @@ module "storage_endpoint" {
 module "storage_queue_endpoint" {
   source = "../../modules/azure/network/private-endpoint"
 
-  enable = local.has_file_upload_jobs && !local.is_temporary && local.private_endpoints_subnet != null
+  enable = local.service_config.has_file_upload_jobs && !local.is_temporary && local.private_endpoints_subnet != null
 
   subnet_id         = local.private_endpoints_subnet != null ? local.private_endpoints_subnet.id : null
   resource_id       = module.app_config.has_blob_storage ? module.storage[0].storage_account_id : ""

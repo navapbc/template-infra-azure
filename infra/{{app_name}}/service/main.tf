@@ -14,13 +14,6 @@ locals {
   environment_config = module.app_config.environment_configs[var.environment_name]
   service_config     = local.environment_config.service_config
 
-  # Whether any background job is triggered by file uploads, which requires
-  # extra storage account plumbing (see storage.tf).
-  has_file_upload_jobs = length([
-    for job in values(local.service_config.jobs) : job
-    if job.trigger.type == "event"
-  ]) > 0
-
   service_name        = "${local.prefix}${local.service_config.service_name}"
   resource_group_name = local.service_config.resource_group_name
 

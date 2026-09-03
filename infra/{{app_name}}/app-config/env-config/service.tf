@@ -19,6 +19,15 @@ locals {
 
     jobs = local.jobs
 
+    # Whether any job is triggered by file uploads. Derived once here because
+    # both the service module and the storage layer need to know, and the
+    # storage layer cannot read it back off the service module without
+    # creating a dependency cycle.
+    has_file_upload_jobs = contains(
+      [for job in values(local.jobs) : job.trigger.type],
+      "event",
+    )
+
     job_cpu    = var.service_job_cpu
     job_memory = var.service_job_memory
 
