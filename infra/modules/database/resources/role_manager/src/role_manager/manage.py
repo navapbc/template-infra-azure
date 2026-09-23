@@ -2,9 +2,10 @@ import itertools
 import os
 from operator import itemgetter
 
-from pg8000.native import Connection, identifier, literal
+from pg8000.native import Connection, identifier
 
 from role_manager import db
+from role_manager.providers import Provider, get_provider
 
 
 def manage_main():
@@ -12,37 +13,63 @@ def manage_main():
     return 0
 
 
-def manage(config: dict | None = None):
+def manage(config: dict | None = None, provider: Provider | None = None):
     """Manage database roles, schema, and privileges"""
+
+    provider = provider or get_provider()
 
     print(
         "-- Running command 'manage' to manage database roles, schema, and privileges"
     )
+    print(f"-- Using cloud provider: {provider.name}")
 
-    # Microsoft Entra/Azure AD users must be created in the `postgres` database,
-    # so we do that first.
-    #
-    # https://github.com/Azure/azure-postgresql/issues/117
-    # https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/how-to-manage-azure-ad-users
-    with db.connect_as_admin_user_to_root_db() as admin_conn:
-        print_current_db_config(admin_conn, True)
+    admin_username = os.environ["ADMIN_USER"]
+    app_username = os.environ["APP_USER"]
+    migrator_username = os.environ["MIGRATOR_USER"]
+    database_name = os.environ["DB_NAME"]
 
-        admin_username = os.environ["ADMIN_USER"]
-        app_username = os.environ["APP_USER"]
-        migrator_username = os.environ["MIGRATOR_USER"]
-        database_name = os.environ["DB_NAME"]
-        configure_roles(
-            admin_conn, admin_username, [migrator_username, app_username], database_name
-        )
+    # Some providers (Azure) require principals to be created in the `postgres`
+    # database rather than the application database. Those need two
+    # connections; providers that create principals in the application
+    # database do all of this in one, which avoids minting a second auth token
+    # and avoids splitting role creation from schema configuration across two
+    # sessions (where a failure between them leaves a half-configured
+    # database).
+    if provider.creates_principals_in_root_db:
+        with db.connect_as_admin_user_to_root_db(provider=provider) as root_conn:
+            # Principals live in the root database for this provider, so that
+            # is where they can be listed.
+            print_current_db_config(
+                root_conn, provider, include_managed_principals=True
+            )
+            configure_roles(
+                root_conn,
+                admin_username,
+                [migrator_username, app_username],
+                database_name,
+                provider,
+            )
 
-    # Then connect to the application's database to do everything else.
-    with db.connect_as_admin_user() as admin_conn:
-        print_current_db_config(admin_conn)
+    with db.connect_as_admin_user(provider=provider) as admin_conn:
+        if not provider.creates_principals_in_root_db:
+            print_current_db_config(
+                admin_conn, provider, include_managed_principals=True
+            )
+            configure_roles(
+                admin_conn,
+                admin_username,
+                [migrator_username, app_username],
+                database_name,
+                provider,
+            )
+        else:
+            print_current_db_config(admin_conn, provider)
+
         configure_database(admin_conn, config)
-        roles, schema_privileges = print_current_db_config(admin_conn)
+        roles, schema_privileges = print_current_db_config(admin_conn, provider)
         roles_with_groups = get_roles_with_groups(admin_conn)
 
-    configure_default_privileges()
+    configure_default_privileges(provider)
 
     print(
         {
@@ -69,22 +96,6 @@ def get_roles(conn: Connection) -> list[str]:
             print_query=False,
         )
     ]
-
-
-def get_entra_principals(conn: Connection) -> list[list[str]]:
-    # https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/how-to-manage-azure-ad-users#list-microsoft-entra-roles-using-sql
-    #
-    # pg_catalog.pgaadauth_list_principals(isAdminValue boolean)
-    return list(
-        db.execute(
-            conn,
-            """
-            SELECT *
-            FROM pg_catalog.pgaadauth_list_principals(true)
-            """,
-            print_query=False,
-        )
-    )
 
 
 def get_roles_with_groups(conn: Connection) -> dict[str, str]:
@@ -154,45 +165,33 @@ def configure_database(conn: Connection, config: dict | None = None) -> None:
 
 
 def configure_roles(
-    conn: Connection, admin_username: str, roles: list[str], database_name: str
+    conn: Connection,
+    admin_username: str,
+    roles: list[str],
+    database_name: str,
+    provider: Provider,
 ) -> None:
     print("---- Configuring roles")
     for role in roles:
-        configure_role(conn, admin_username, role, database_name)
+        configure_role(conn, admin_username, role, database_name, provider)
 
 
 def configure_role(
-    conn: Connection, admin_username: str, username: str, database_name: str
+    conn: Connection,
+    admin_username: str,
+    username: str,
+    database_name: str,
+    provider: Provider,
 ) -> None:
     print(f"------ Configuring role: {username=}")
 
-    create_principal(conn, username)
-    user_grants(conn, username, database_name)
+    provider.create_principal(conn, username)
+    user_grants(
+        conn, username, database_name, provider.grant_roles_for_principal(username)
+    )
 
     # ensure the admin user can become any created role
     db.execute(conn, f"GRANT {identifier(username)} TO {identifier(admin_username)}")
-
-
-def create_principal(conn: Connection, username: str) -> None:
-    """Create user for Microsoft Entra identity.
-
-    This needs to be run against the `postgres` database.
-    """
-    # https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/how-to-manage-azure-ad-users#create-a-userrole-using-microsoft-entra-principal-name
-    #
-    # pg_catalog.pgaadauth_create_principal(roleName text, isAdmin boolean, isMfa boolean)
-    db.execute(
-        conn,
-        f"""
-        DO $$
-        BEGIN
-            PERFORM pg_catalog.pgaadauth_create_principal({literal(username)}, false, false);
-            EXCEPTION WHEN DUPLICATE_OBJECT THEN
-            RAISE NOTICE 'user already exists';
-        END
-        $$;
-        """,
-    )
 
 
 def user_grants(
@@ -205,27 +204,6 @@ def user_grants(
     db.execute(
         conn,
         f"GRANT CONNECT ON DATABASE {identifier(database_name)} TO {identifier(username)}",
-    )
-
-
-def configure_pg_role(conn: Connection, username: str, database_name: str) -> None:
-    print(f"------ Configuring role: {username=}")
-    create_pg_user(conn, username)
-    user_grants(conn, username, database_name, ["rds_iam"])
-
-
-def create_pg_user(conn: Connection, username: str) -> None:
-    db.execute(
-        conn,
-        f"""
-        DO $$
-        BEGIN
-            CREATE USER {identifier(username)};
-            EXCEPTION WHEN DUPLICATE_OBJECT THEN
-            RAISE NOTICE 'user already exists';
-        END
-        $$;
-        """,
     )
 
 
@@ -247,17 +225,19 @@ def configure_schema(
     )
 
 
-def configure_default_privileges():
+def configure_default_privileges(provider: Provider):
     """
     Configure default privileges so that future tables, sequences, and routines
     created by the migrator user can be accessed by the app user.
     You can only alter default privileges for the current role, so we need to
     run these SQL queries as the migrator user rather than as the master user.
     """
-    migrator_username = os.environ.get("MIGRATOR_USER")
-    schema_name = os.environ.get("DB_SCHEMA")
-    app_username = os.environ.get("APP_USER")
-    with db.connect_using_iam(migrator_username) as conn:
+    # These are required; use indexing (like the rest of this module) so a
+    # missing variable fails loudly instead of producing a None username.
+    migrator_username = os.environ["MIGRATOR_USER"]
+    schema_name = os.environ["DB_SCHEMA"]
+    app_username = os.environ["APP_USER"]
+    with db.connect_using_iam(migrator_username, provider=provider) as conn:
         print(
             f"------ Granting privileges for future objects in schema: grantee={app_username}"
         )
@@ -276,12 +256,12 @@ def configure_default_privileges():
 
 
 def print_current_db_config(
-    conn: Connection, isRootDb: bool = False
+    conn: Connection, provider: Provider, include_managed_principals: bool = False
 ) -> tuple[list[str], list[tuple[str, str]]]:
     print("-- Current database configuration")
     roles = get_roles(conn)
-    if isRootDb:
-        roles.extend(map(str, get_entra_principals(conn)))
+    if include_managed_principals:
+        roles.extend(map(str, provider.get_managed_principals(conn)))
     print_roles(roles)
     schema_privileges = get_schema_privileges(conn)
     print_schema_privileges(schema_privileges)

@@ -3,6 +3,7 @@ import os
 from pg8000.native import Connection, literal
 
 from role_manager import db
+from role_manager.providers import Provider, get_provider
 
 
 def check_main():
@@ -10,18 +11,19 @@ def check_main():
     return 0
 
 
-def check(config: dict | None = None):
+def check(config: dict | None = None, provider: Provider | None = None):
     """Check that database roles, schema, and privileges were
     properly configured
     """
+    provider = provider or get_provider()
     print("Running command 'check' to check database roles, schema, and privileges")
     app_username = os.environ["APP_USER"]
     migrator_username = os.environ["MIGRATOR_USER"]
     schema_name = os.environ["DB_SCHEMA"]
 
     with (
-        db.connect_using_iam(app_username) as app_conn,
-        db.connect_using_iam(migrator_username) as migrator_conn,
+        db.connect_using_iam(app_username, provider=provider) as app_conn,
+        db.connect_using_iam(migrator_username, provider=provider) as migrator_conn,
     ):
         check_search_path(migrator_conn, schema_name)
         check_migrator_create_table(migrator_conn)
