@@ -87,10 +87,22 @@ def test_admin_can_assume_every_configured_role():
     )
 
 
-def test_print_current_db_config_skips_managed_principals_when_not_root():
-    provider = FakeAwsProvider()
-    conn = RecordingConnection()
+class _ListingProvider(FakeAwsProvider):
+    """Returns a distinguishable principal so the assertions cannot be vacuous."""
 
-    roles, _ = manage.print_current_db_config(conn, provider)
+    def get_managed_principals(self, conn) -> list[list[str]]:
+        return [["managed-principal"]]
 
-    assert roles == []
+
+def test_managed_principals_are_listed_when_requested():
+    roles, _ = manage.print_current_db_config(
+        RecordingConnection(), _ListingProvider(), include_managed_principals=True
+    )
+
+    assert any("managed-principal" in r for r in roles)
+
+
+def test_managed_principals_are_omitted_by_default():
+    roles, _ = manage.print_current_db_config(RecordingConnection(), _ListingProvider())
+
+    assert not any("managed-principal" in r for r in roles)

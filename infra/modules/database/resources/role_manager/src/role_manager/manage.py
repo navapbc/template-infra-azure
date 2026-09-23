@@ -37,9 +37,9 @@ def manage(config: dict | None = None, provider: Provider | None = None):
         principal_conn = db.connect_as_admin_user(provider=provider)
 
     with principal_conn as admin_conn:
-        print_current_db_config(
-            admin_conn, provider, provider.creates_principals_in_root_db
-        )
+        # This is the connection where principals live, whichever database that
+        # is, so it is the one where the provider can list them.
+        print_current_db_config(admin_conn, provider, include_managed_principals=True)
         configure_roles(
             admin_conn,
             admin_username,
