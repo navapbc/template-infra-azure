@@ -49,3 +49,15 @@ def test_azure_creates_principals_in_root_db():
 def test_azure_needs_no_extra_role_grants():
     # Contrast with AWS, which requires rds_iam.
     assert AzureProvider().grant_roles_for_principal("someuser") == []
+
+
+def test_blank_cloud_provider_falls_back_to_default(monkeypatch):
+    # Terraform emits "" for an unset variable; that should not be an error.
+    monkeypatch.setenv("CLOUD_PROVIDER", "")
+    assert isinstance(get_provider(), AzureProvider)
+
+
+def test_surrounding_whitespace_is_ignored(monkeypatch):
+    # A trailing newline is easy to introduce via a shell export.
+    monkeypatch.setenv("CLOUD_PROVIDER", " azure\n")
+    assert isinstance(get_provider(), AzureProvider)

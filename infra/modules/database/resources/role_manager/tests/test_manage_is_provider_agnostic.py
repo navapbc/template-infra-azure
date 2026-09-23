@@ -106,3 +106,84 @@ def test_managed_principals_are_omitted_by_default():
     roles, _ = manage.print_current_db_config(RecordingConnection(), _ListingProvider())
 
     assert not any("managed-principal" in r for r in roles)
+
+
+def test_non_root_db_provider_uses_a_single_connection(monkeypatch):
+    """A provider that creates principals in the app database should not open
+    the same connection twice: that mints a second auth token and splits role
+    creation from schema configuration across two sessions."""
+    import role_manager.manage as manage_mod
+
+    opened: list[str] = []
+
+    class _Conn(RecordingConnection):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    def fake_connect_as_admin_user(db_name=None, provider=None):
+        opened.append(db_name or "appdb")
+        return _Conn()
+
+    def fake_connect_root(provider=None):
+        opened.append("postgres")
+        return _Conn()
+
+    monkeypatch.setattr(
+        manage_mod.db, "connect_as_admin_user", fake_connect_as_admin_user
+    )
+    monkeypatch.setattr(
+        manage_mod.db, "connect_as_admin_user_to_root_db", fake_connect_root
+    )
+    monkeypatch.setattr(manage_mod, "configure_database", lambda *a, **k: None)
+    monkeypatch.setattr(manage_mod, "get_roles_with_groups", lambda conn: {})
+    monkeypatch.setattr(
+        manage_mod, "configure_default_privileges", lambda provider: None
+    )
+    for var in ["ADMIN_USER", "APP_USER", "MIGRATOR_USER", "DB_NAME"]:
+        monkeypatch.setenv(var, "x")
+
+    manage_mod.manage(provider=FakeAwsProvider())
+
+    assert opened == ["appdb"], f"expected one connection, got {opened}"
+
+
+def test_root_db_provider_uses_two_connections(monkeypatch):
+    """Azure-style providers still need the root database for principals."""
+    import role_manager.manage as manage_mod
+
+    opened: list[str] = []
+
+    class _Conn(RecordingConnection):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    class _RootProvider(FakeAwsProvider):
+        creates_principals_in_root_db = True
+
+    monkeypatch.setattr(
+        manage_mod.db,
+        "connect_as_admin_user",
+        lambda db_name=None, provider=None: (opened.append("appdb"), _Conn())[1],
+    )
+    monkeypatch.setattr(
+        manage_mod.db,
+        "connect_as_admin_user_to_root_db",
+        lambda provider=None: (opened.append("postgres"), _Conn())[1],
+    )
+    monkeypatch.setattr(manage_mod, "configure_database", lambda *a, **k: None)
+    monkeypatch.setattr(manage_mod, "get_roles_with_groups", lambda conn: {})
+    monkeypatch.setattr(
+        manage_mod, "configure_default_privileges", lambda provider: None
+    )
+    for var in ["ADMIN_USER", "APP_USER", "MIGRATOR_USER", "DB_NAME"]:
+        monkeypatch.setenv(var, "x")
+
+    manage_mod.manage(provider=_RootProvider())
+
+    assert opened == ["postgres", "appdb"], f"expected root then app, got {opened}"

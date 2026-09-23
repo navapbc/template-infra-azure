@@ -29,7 +29,11 @@ def get_provider(name: str | None = None) -> Provider:
     Defaults to the CLOUD_PROVIDER environment variable, then to "azure" so
     that existing Azure deployments keep working without config changes.
     """
-    provider_name = (name or os.environ.get("CLOUD_PROVIDER") or "azure").lower()
+    # Strip before testing for emptiness: Terraform emits "" for an unset
+    # variable, and a trailing newline is easy to introduce in a shell export.
+    # Both should fall back to the default rather than fail obscurely later.
+    provider_name = (name or os.environ.get("CLOUD_PROVIDER") or "").strip().lower()
+    provider_name = provider_name or "azure"
 
     if provider_name not in _PROVIDERS:
         supported = ", ".join(sorted(_PROVIDERS))

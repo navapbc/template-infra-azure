@@ -1,3 +1,5 @@
+from typing import Any
+
 from azure.identity import DefaultAzureCredential
 from pg8000.native import Connection, literal
 
@@ -43,7 +45,7 @@ class AzureProvider:
             """,
         )
 
-    def get_managed_principals(self, conn: Connection) -> list[list[str]]:
+    def get_managed_principals(self, conn: Connection) -> list[list[Any]]:
         # https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/how-to-manage-azure-ad-users#list-microsoft-entra-roles-using-sql
         #
         # pg_catalog.pgaadauth_list_principals(isAdminValue boolean)

@@ -1,4 +1,4 @@
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from pg8000.native import Connection
 
@@ -31,11 +31,14 @@ class Provider(Protocol):
         """
         ...
 
-    def get_managed_principals(self, conn: Connection) -> list[list[str]]:
+    def get_managed_principals(self, conn: Connection) -> list[list[Any]]:
         """List principals the cloud identity provider knows about.
 
-        Used for diagnostic output. Returns an empty list where the provider
-        exposes no equivalent concept.
+        Rows are whatever the provider's catalog returns and may mix types --
+        Azure's pgaadauth_list_principals includes boolean and OID columns
+        alongside the name. Used for diagnostic output only, so callers should
+        stringify rather than index into them. Returns an empty list where the
+        provider exposes no equivalent concept.
         """
         ...
 

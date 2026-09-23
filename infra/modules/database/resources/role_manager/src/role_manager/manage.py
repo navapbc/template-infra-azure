@@ -29,28 +29,42 @@ def manage(config: dict | None = None, provider: Provider | None = None):
     database_name = os.environ["DB_NAME"]
 
     # Some providers (Azure) require principals to be created in the `postgres`
-    # database rather than the application database, so that happens first and
-    # against whichever database the provider requires.
+    # database rather than the application database. Those need two
+    # connections; providers that create principals in the application
+    # database do all of this in one, which avoids minting a second auth token
+    # and avoids splitting role creation from schema configuration across two
+    # sessions (where a failure between them leaves a half-configured
+    # database).
     if provider.creates_principals_in_root_db:
-        principal_conn = db.connect_as_admin_user_to_root_db(provider=provider)
-    else:
-        principal_conn = db.connect_as_admin_user(provider=provider)
+        with db.connect_as_admin_user_to_root_db(provider=provider) as root_conn:
+            # Principals live in the root database for this provider, so that
+            # is where they can be listed.
+            print_current_db_config(
+                root_conn, provider, include_managed_principals=True
+            )
+            configure_roles(
+                root_conn,
+                admin_username,
+                [migrator_username, app_username],
+                database_name,
+                provider,
+            )
 
-    with principal_conn as admin_conn:
-        # This is the connection where principals live, whichever database that
-        # is, so it is the one where the provider can list them.
-        print_current_db_config(admin_conn, provider, include_managed_principals=True)
-        configure_roles(
-            admin_conn,
-            admin_username,
-            [migrator_username, app_username],
-            database_name,
-            provider,
-        )
-
-    # Then connect to the application's database to do everything else.
     with db.connect_as_admin_user(provider=provider) as admin_conn:
-        print_current_db_config(admin_conn, provider)
+        if not provider.creates_principals_in_root_db:
+            print_current_db_config(
+                admin_conn, provider, include_managed_principals=True
+            )
+            configure_roles(
+                admin_conn,
+                admin_username,
+                [migrator_username, app_username],
+                database_name,
+                provider,
+            )
+        else:
+            print_current_db_config(admin_conn, provider)
+
         configure_database(admin_conn, config)
         roles, schema_privileges = print_current_db_config(admin_conn, provider)
         roles_with_groups = get_roles_with_groups(admin_conn)
