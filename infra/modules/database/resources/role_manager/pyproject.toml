@@ -14,9 +14,13 @@ hello = "role_manager.main:main"
 manage = "role_manager.manage:manage_main"
 check = "role_manager.check:check_main"
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
 [dependency-groups]
 dev = [
     "mypy>=2.1.0",
+    "pytest>=9.1.1",
     "ruff>=0.11.2",
 ]
 

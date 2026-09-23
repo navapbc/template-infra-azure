@@ -1,0 +1,9 @@
+# The image runs the role manager; tests and local tooling caches are not
+# needed at runtime and would otherwise be copied in by `COPY . /app`.
+tests/
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.pyc

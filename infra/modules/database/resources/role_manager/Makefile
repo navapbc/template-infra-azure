@@ -1,4 +1,5 @@
 PY_SRCS := src/
+PY_TEST_SRCS := tests/
 
 PY_RUN ?= uv run --frozen
 
@@ -11,13 +12,16 @@ LINT_ARGS :=--fix
 endif
 
 check: ## Run checks
-check: check-static
+check: check-static test
 
 check-static: ## Run static code checks
 check-static: fmt lint
 
 fmt: ## Run formatter
-	$(PY_RUN) ruff format $(FMT_ARGS) $(PY_SRCS)
+	$(PY_RUN) ruff format $(FMT_ARGS) $(PY_SRCS) $(PY_TEST_SRCS)
+
+test: ## Run tests
+	$(PY_RUN) pytest $(args) $(PY_TEST_SRCS)
 
 lint: ## Run linting
 lint: lint-mypy lint-ruff lint-uv
@@ -26,7 +30,7 @@ lint-mypy: ## Run mypy
 	$(PY_RUN) mypy $(args) $(PY_SRCS)
 
 lint-ruff: ## Run ruff linting with auto-fixes
-	$(PY_RUN) ruff check $(LINT_ARGS) $(args) $(PY_SRCS)
+	$(PY_RUN) ruff check $(LINT_ARGS) $(args) $(PY_SRCS) $(PY_TEST_SRCS)
 
 lint-uv: ## Run uv checks
 	uv lock --check
