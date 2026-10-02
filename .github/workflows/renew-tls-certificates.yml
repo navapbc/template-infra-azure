@@ -52,3 +52,4 @@ jobs:
         run: ./bin/renew-tls-certificates "${{ matrix.network_name }}"
         env:
           ARM_USE_OIDC: true
+          AZURE_AUTH_METHOD: cli
